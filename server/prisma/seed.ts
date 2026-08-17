@@ -173,7 +173,10 @@ async function main() {
       });
     }
     for (const q of c.questions) {
-      const exists = await prisma.question.findFirst({ where: { categoryId: category.id, text: q.text } });
+      // Drawing questions all share the same instruction text (only the
+      // answer/points differ per tier), so text alone can't tell them
+      // apart — points must be part of the dedup key too.
+      const exists = await prisma.question.findFirst({ where: { categoryId: category.id, text: q.text, points: q.points } });
       if (!exists) {
         await prisma.question.create({
           data: {
