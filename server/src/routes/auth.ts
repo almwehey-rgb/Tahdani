@@ -31,6 +31,23 @@ router.post('/login', async (req, res) => {
   res.json({ token, user });
 });
 
+// No name, no code — used automatically by the app so players never see a
+// login screen. Creates a throwaway personal account on first visit; the
+// token then persists in the browser like any other session.
+router.post('/guest', async (_req, res) => {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const guestName = `ضيف-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    try {
+      const user = await prisma.user.create({ data: { name: guestName, remainingGames: 1 } });
+      const token = signToken({ userId: user.id, role: user.role });
+      return res.json({ token, user });
+    } catch {
+      // name collision (astronomically unlikely) — retry with a new suffix
+    }
+  }
+  res.status(500).json({ error: 'تعذر إنشاء حساب مؤقت، حاول مرة أخرى' });
+});
+
 router.get('/me', requireAuth, async (req: AuthedRequest, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId } });
   if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });

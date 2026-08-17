@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { useAuthStore } from '../store/auth';
 
 const features = [
   { icon: '🗂️', title: '6 فئات من اختيارك', desc: 'شكّل لوحة اللعبة باختيار 6 فئات من عشرات الفئات المتجددة.' },
@@ -11,8 +10,6 @@ const features = [
 ];
 
 export default function Home() {
-  const user = useAuthStore((s) => s.user);
-
   return (
     <div>
       <section className="max-w-6xl mx-auto px-4 pt-14 pb-10 text-center">
@@ -31,7 +28,7 @@ export default function Home() {
           كوّن فريقين، اختر فئاتك، استخدم وسائل المساعدة، وتحدّى في جولة الرسم — كل هذا وأكثر بتصميم أوضح وتجربة أسرع.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link to={user ? '/new-game' : '/login'} className="btn btn-gold text-lg">
+          <Link to="/new-game" className="btn btn-gold text-lg">
             🎮 ابدأ اللعب الآن
           </Link>
           <Link to="/new-game/kids" className="btn btn-ghost text-lg">
