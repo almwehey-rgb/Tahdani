@@ -10,6 +10,7 @@ import Gifts from './pages/Gifts';
 import Account from './pages/Account';
 import Episodes from './pages/Episodes';
 import TvApply from './pages/TvApply';
+import PaymentCallback from './pages/PaymentCallback';
 
 import NewGameWizard from './pages/game/NewGameWizard';
 import Board from './pages/game/Board';
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="account" element={<Account />} />
           <Route path="gifts" element={<Gifts />} />
+          <Route path="payment/callback" element={<PaymentCallback />} />
 
           <Route path="new-game" element={<NewGameWizard mode="CLASSIC" />} />
           <Route path="new-game/kids" element={<NewGameWizard mode="KIDS" />} />

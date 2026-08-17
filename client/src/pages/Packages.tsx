@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../api/client';
-import { useAuthStore } from '../store/auth';
 import type { Package } from '../api/types';
 import Spinner from '../components/Spinner';
 
@@ -11,7 +10,6 @@ export default function Packages() {
   const [selected, setSelected] = useState<Package | null>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [paying, setPaying] = useState(false);
-  const { user, setUser } = useAuthStore();
 
   useEffect(() => {
     api.get('/packages').then(({ data }) => setPackages(data.packages)).finally(() => setLoading(false));
@@ -21,17 +19,14 @@ export default function Packages() {
     if (!selected) return toast.error('يرجى تحديد الحزمة');
     setPaying(true);
     try {
-      const { data } = await api.post('/purchases/checkout', {
+      const { data } = await api.post('/payments/checkout', {
         packageId: selected.id,
         discountCode: discountCode.trim() || undefined,
+        purpose: 'SELF',
       });
-      toast.success('تم الدفع بنجاح 🎉');
-      if (user) setUser({ ...user, remainingGames: data.remainingGames });
-      setSelected(null);
-      setDiscountCode('');
+      window.location.href = data.redirectUrl;
     } catch (err) {
       toast.error(apiErrorMessage(err));
-    } finally {
       setPaying(false);
     }
   }
@@ -69,8 +64,9 @@ export default function Packages() {
             <input className="input" placeholder="WELCOME10" value={discountCode} onChange={(e) => setDiscountCode(e.target.value)} />
           </div>
           <button className="btn btn-gold w-full" onClick={checkout} disabled={paying}>
-            {paying ? 'جاري الإرسال...' : `ادفع الآن — ${selected.price.toFixed(3)} ${selected.currency}`}
+            {paying ? 'جاري التحويل لبوابة الدفع...' : `ادفع الآن — ${selected.price.toFixed(3)} ${selected.currency}`}
           </button>
+          <p className="text-xs text-[var(--color-ink-faint)] text-center mt-2">سيتم تحويلك لصفحة دفع آمنة لإتمام العملية</p>
         </div>
       )}
     </div>

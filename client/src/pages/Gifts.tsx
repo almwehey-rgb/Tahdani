@@ -37,14 +37,14 @@ export default function Gifts() {
     if (!selected) return toast.error('يرجى اختيار الباقة التي تريد إهدائها');
     setBusy(true);
     try {
-      const { data } = await api.post('/gifts/purchase', { packageId: selected.id, toPhone: toPhone.trim() || undefined });
-      toast.success(`تم إنشاء كود الهدية: ${data.gift.code}`);
-      setSelected(null);
-      setToPhone('');
-      loadAll();
+      const { data } = await api.post('/payments/checkout', {
+        packageId: selected.id,
+        purpose: 'GIFT',
+        giftToPhone: toPhone.trim() || undefined,
+      });
+      window.location.href = data.redirectUrl;
     } catch (err) {
       toast.error(apiErrorMessage(err));
-    } finally {
       setBusy(false);
     }
   }

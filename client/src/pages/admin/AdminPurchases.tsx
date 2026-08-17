@@ -6,6 +6,8 @@ interface AdminPurchase {
   id: string;
   amount: number;
   status: string;
+  purpose: string;
+  provider: string | null;
   createdAt: string;
   package: { name: string; currency: string };
   user: { name: string; phone: string };
@@ -30,6 +32,7 @@ export default function AdminPurchases() {
             <th className="py-2 px-2">الباقة</th>
             <th className="py-2 px-2">المبلغ</th>
             <th className="py-2 px-2">الحالة</th>
+            <th className="py-2 px-2">البوابة</th>
             <th className="py-2 px-2">التاريخ</th>
           </tr>
         </thead>
@@ -45,7 +48,9 @@ export default function AdminPurchases() {
               </td>
               <td className="py-2 px-2">
                 <span className={p.status === 'PAID' ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}>{p.status}</span>
+                {p.purpose === 'GIFT' && <span className="text-[var(--color-gold)] text-xs mr-1">(هدية)</span>}
               </td>
+              <td className="py-2 px-2 text-[var(--color-ink-faint)]">{p.provider || '—'}</td>
               <td className="py-2 px-2 text-[var(--color-ink-faint)]">{new Date(p.createdAt).toLocaleDateString('ar')}</td>
             </tr>
           ))}

@@ -2,8 +2,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db';
 import { requireAuth, AuthedRequest } from '../middleware/auth';
-import { activeGateway } from '../utils/payment';
-import { generateCode } from '../utils/codes';
 
 const router = Router();
 
@@ -23,35 +21,6 @@ router.get('/received', requireAuth, async (req: AuthedRequest, res) => {
     orderBy: { createdAt: 'desc' },
   });
   res.json({ gifts });
-});
-
-const purchaseGiftSchema = z.object({
-  packageId: z.string(),
-  toPhone: z.string().optional(),
-});
-
-router.post('/purchase', requireAuth, async (req: AuthedRequest, res) => {
-  const parsed = purchaseGiftSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
-  const { packageId, toPhone } = parsed.data;
-
-  const pkg = await prisma.package.findUnique({ where: { id: packageId } });
-  if (!pkg || !pkg.active) return res.status(404).json({ error: 'الباقة غير متوفرة' });
-
-  const result = await activeGateway.charge(pkg.price, pkg.currency);
-  if (!result.success) return res.status(402).json({ error: 'فشل في عملية الدفع' });
-
-  const gift = await prisma.giftCode.create({
-    data: {
-      code: generateCode('GIFT'),
-      packageId,
-      fromUserId: req.userId!,
-      toPhone,
-    },
-    include: { package: true },
-  });
-
-  res.status(201).json({ gift });
 });
 
 const redeemSchema = z.object({ code: z.string().min(4) });

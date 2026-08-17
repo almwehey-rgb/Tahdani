@@ -72,7 +72,11 @@ model Purchase {
   discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
   amount         Float
   status         String    @default("PENDING") // PENDING | PAID | FAILED
-  providerRef    String? // mock payment gateway reference
+  purpose        String    @default("SELF") // SELF | GIFT
+  giftToPhone    String? // set when purpose = GIFT
+  provider       String? // tap | myfatoorah | mock
+  providerRef    String? // gateway charge/invoice id, used to verify status
+  redirectUrl    String? // hosted checkout URL returned by the gateway
   createdAt      DateTime  @default(now())
   paidAt         DateTime?
 }
@@ -80,6 +84,7 @@ model Purchase {
 model GiftCode {
   id               String    @id @default(cuid())
   code             String    @unique
+  purchaseId       String?   @unique
   packageId        String
   package          Package   @relation(fields: [packageId], references: [id])
   fromUserId       String
