@@ -10,7 +10,6 @@ export default function Gifts() {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [selected, setSelected] = useState<Package | null>(null);
-  const [toPhone, setToPhone] = useState('');
   const [sent, setSent] = useState<GiftCode[]>([]);
   const [received, setReceived] = useState<GiftCode[]>([]);
   const [redeemCode, setRedeemCode] = useState('');
@@ -42,7 +41,6 @@ export default function Gifts() {
       const { data } = await api.post('/payments/checkout', {
         packageId: selected.id,
         purpose: 'GIFT',
-        giftToPhone: toPhone.trim() || undefined,
       });
       if (data.redirectUrl) {
         window.location.href = data.redirectUrl;
@@ -95,8 +93,9 @@ export default function Gifts() {
         </div>
         {selected && (
           <div className="card p-4 max-w-md animate-pop">
-            <label className="label">رقم هاتف المُهدى إليه (اختياري)</label>
-            <input className="input mb-3" placeholder="97300000000" value={toPhone} onChange={(e) => setToPhone(e.target.value)} />
+            <p className="text-sm text-[var(--color-ink-dim)] mb-3">
+              بعد الدفع بينشئ لك كود هدية تقدر ترسله لأي شخص بأي وسيلة تبيها — واتساب، رسالة، أو حتى تسليمه باليد.
+            </p>
             <button className="btn btn-gold w-full" onClick={purchaseGift} disabled={busy}>
               🎁 ادفع وأنشئ كود الهدية
             </button>
