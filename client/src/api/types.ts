@@ -117,6 +117,7 @@ export interface GameTile {
   text?: string;
   hint?: string | null;
   answer?: string;
+  imageUrl?: string | null;
 }
 
 export interface Game {

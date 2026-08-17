@@ -7,14 +7,20 @@ const router = Router();
 
 const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER'] as const;
 
-// Picks one random question per point tier (100/200/300) instead of always
-// the same fixed questions, so a larger question bank actually adds variety
-// across games instead of sitting unused.
+const TILES_PER_TIER = 2;
+
+// Picks TILES_PER_TIER random questions per point tier (100/200/300)
+// instead of always the same fixed questions, so a larger question bank
+// actually adds variety across games instead of sitting unused.
 function pickBoardQuestions<T extends { points: number }>(questions: T[]): T[] {
   const picked: T[] = [];
   for (const points of [100, 200, 300]) {
     const pool = questions.filter((q) => q.points === points);
-    if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    picked.push(...pool.slice(0, TILES_PER_TIER));
   }
   return picked;
 }
@@ -116,7 +122,7 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
     answeredByTeamId: gq.answeredByTeamId,
     isCorrect: gq.isCorrect,
     usedVar: gq.usedVar,
-    ...(gq.isOpened ? { text: gq.question.text, hint: gq.question.hint, answer: gq.question.answer } : {}),
+    ...(gq.isOpened ? { text: gq.question.text, hint: gq.question.hint, answer: gq.question.answer, imageUrl: gq.question.imageUrl } : {}),
   }));
 
   res.json({
@@ -142,6 +148,7 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
       text: gq.question.text,
       hint: gq.question.hint,
       answer: gq.question.answer,
+      imageUrl: gq.question.imageUrl,
       points: gq.question.points,
       isDrawing: gq.question.isDrawing,
     },

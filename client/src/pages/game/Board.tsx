@@ -284,6 +284,13 @@ export default function Board() {
             ) : (
               <>
                 <p className="text-xl font-bold text-center mb-4 leading-relaxed">{openTile.text}</p>
+                {openTile.imageUrl && (
+                  <img
+                    src={openTile.imageUrl}
+                    alt=""
+                    className="mx-auto mb-4 max-h-48 rounded-lg border border-[var(--color-border)]"
+                  />
+                )}
                 {showAnswer && (
                   <p className="text-center text-lg font-extrabold mb-4 p-3 rounded-lg" style={{ background: 'var(--color-surface-hi)', color: 'var(--color-success)' }}>
                     {openTile.answer}

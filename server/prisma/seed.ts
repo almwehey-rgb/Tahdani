@@ -11,7 +11,7 @@ const extraQuestions = extraQuestionsRaw as unknown as Record<
   { text: string; answer: string; points: number; hint?: string | null }[]
 >;
 function extrasFor(categoryName: string) {
-  return (extraQuestions[categoryName] ?? []).map((q) => ({ ...q, hint: q.hint ?? undefined }));
+  return (extraQuestions[categoryName] ?? []).map((q) => ({ ...q, hint: q.hint ?? undefined, imageUrl: undefined as string | undefined }));
 }
 
 async function main() {
@@ -62,7 +62,7 @@ async function main() {
   }
 
   // ---------- Categories & questions ----------
-  type Q = { text: string; answer: string; points: number; hint?: string };
+  type Q = { text: string; answer: string; points: number; hint?: string; imageUrl?: string };
   const categoryDefs: { name: string; icon: string; color: string; type?: string; seasonTag?: string; questions: Q[] }[] = [
     {
       name: 'رياضة',
@@ -175,6 +175,66 @@ async function main() {
         { text: 'ارسم الكلمة واجعل فريقك يخمنها خلال الوقت المحدد', answer: 'قصر', points: 300 },
       ],
     },
+    {
+      name: 'أعلام الدول',
+      icon: '🚩',
+      color: '#2E8FC9',
+      questions: (
+        [
+          // [countryCode, country name in Arabic]
+          ['sa', 'السعودية'],
+          ['ae', 'الإمارات'],
+          ['kw', 'الكويت'],
+          ['qa', 'قطر'],
+          ['bh', 'البحرين'],
+          ['om', 'عمان'],
+          ['eg', 'مصر'],
+          ['us', 'الولايات المتحدة الأمريكية'],
+          ['gb', 'بريطانيا'],
+          ['fr', 'فرنسا'],
+          ['de', 'ألمانيا'],
+          ['jp', 'اليابان'],
+        ].map(([code, name]) => ({ code, name, points: 100 as const })) as { code: string; name: string; points: 100 | 200 | 300 }[]
+      )
+        .concat(
+          [
+            ['br', 'البرازيل'],
+            ['it', 'إيطاليا'],
+            ['es', 'إسبانيا'],
+            ['ca', 'كندا'],
+            ['au', 'أستراليا'],
+            ['tr', 'تركيا'],
+            ['jo', 'الأردن'],
+            ['lb', 'لبنان'],
+            ['ma', 'المغرب'],
+            ['dz', 'الجزائر'],
+            ['tn', 'تونس'],
+            ['cn', 'الصين'],
+          ].map(([code, name]) => ({ code, name, points: 200 as const })),
+        )
+        .concat(
+          [
+            ['nz', 'نيوزيلندا'],
+            ['ch', 'سويسرا'],
+            ['se', 'السويد'],
+            ['no', 'النرويج'],
+            ['fi', 'فنلندا'],
+            ['gr', 'اليونان'],
+            ['pt', 'البرتغال'],
+            ['nl', 'هولندا'],
+            ['be', 'بلجيكا'],
+            ['za', 'جنوب أفريقيا'],
+            ['ar', 'الأرجنتين'],
+            ['mx', 'المكسيك'],
+          ].map(([code, name]) => ({ code, name, points: 300 as const })),
+        )
+        .map(({ code, name, points }) => ({
+          text: 'ما اسم الدولة صاحبة هذا العلم؟',
+          answer: name,
+          points,
+          imageUrl: `https://flagcdn.com/w320/${code}.png`,
+        })),
+    },
   ];
 
   for (const c of categoryDefs) {
@@ -198,6 +258,7 @@ async function main() {
             answer: q.answer,
             points: q.points,
             hint: q.hint,
+            imageUrl: q.imageUrl,
             isDrawing: c.type === 'DRAWING',
           },
         });
