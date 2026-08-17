@@ -43,6 +43,19 @@ export default function Board() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Lock body scroll while a fixed-position overlay (question modal, phone
+  // lifeline) is open — without this, mobile Safari/Chrome can leave the
+  // page's own scroll gesture "fighting" the overlay's touch handling
+  // (especially the drawing canvas, which sets touch-action:none) and the
+  // whole screen stops responding to taps until reload.
+  useEffect(() => {
+    const shouldLock = !!openTile || phoneOverlay !== null;
+    document.body.style.overflow = shouldLock ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [openTile, phoneOverlay]);
+
   useEffect(() => {
     if (!openTile) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -90,7 +103,9 @@ export default function Board() {
     }
     try {
       const { data } = await api.post(`/games/${id}/questions/${tile.gameQuestionId}/open`);
-      setOpenTile({ ...tile, ...data.tile, isOpened: true });
+      const opened = { ...tile, ...data.tile, isOpened: true };
+      setOpenTile(opened);
+      setBoard((prev) => (prev ? { ...prev, tiles: prev.tiles.map((t) => (t.gameQuestionId === tile.gameQuestionId ? opened : t)) } : prev));
     } catch (err) {
       toast.error(apiErrorMessage(err));
     }

@@ -74,6 +74,10 @@ export default function DrawingCanvas() {
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    // Route all subsequent pointer events (even ones that move outside the
+    // canvas mid-stroke) back to this element, so a touch gesture can't get
+    // "lost" between the canvas and the page behind it.
+    e.currentTarget.setPointerCapture(e.pointerId);
     setDrawing(true);
     currentStroke.current = { points: [getPos(e)], color, width: tool === 'eraser' ? width * 3 : width, erase: tool === 'eraser' };
     setRedoStack([]);
@@ -147,6 +151,7 @@ export default function DrawingCanvas() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
+        onPointerCancel={onPointerUp}
       />
       <div className="flex flex-wrap items-center gap-2">
         <button className={`btn !py-1.5 !px-3 text-sm ${tool === 'pen' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setTool('pen')}>
