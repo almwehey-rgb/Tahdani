@@ -5,7 +5,7 @@ import { requireAuth, AuthedRequest } from '../middleware/auth';
 
 const router = Router();
 
-const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER'] as const;
+const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER', 'STEAL_POINTS'] as const;
 
 const TILES_PER_TIER = 2;
 
@@ -181,11 +181,43 @@ router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedReques
   res.json({ teams });
 });
 
+const useLifelineSchema = z.object({ gameQuestionId: z.string().optional() });
+
 router.post('/:id/lifelines/:lifelineId/use', requireAuth, async (req: AuthedRequest, res) => {
   const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
   if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
-  const lifeline = await prisma.teamLifeline.update({ where: { id: req.params.lifelineId }, data: { used: true } });
-  res.json({ lifeline });
+
+  const lifeline = await prisma.teamLifeline.findUnique({ where: { id: req.params.lifelineId } });
+  if (!lifeline) return res.status(404).json({ error: 'وسيلة المساعدة غير موجودة' });
+
+  // Steals points equal to the currently open question's value from the
+  // other team, capped at what they actually have so scores never go
+  // negative.
+  let stolen = 0;
+  if (lifeline.type === 'STEAL_POINTS') {
+    const parsed = useLifelineSchema.safeParse(req.body);
+    const gameQuestionId = parsed.success ? parsed.data.gameQuestionId : undefined;
+    if (gameQuestionId) {
+      const [gq, team] = await Promise.all([
+        prisma.gameQuestion.findUnique({ where: { id: gameQuestionId }, include: { question: true } }),
+        prisma.team.findUnique({ where: { id: lifeline.teamId } }),
+      ]);
+      const opponent = team ? await prisma.team.findFirst({ where: { gameId: game.id, id: { not: team.id } } }) : null;
+      if (gq && team && opponent) {
+        stolen = Math.min(gq.question.points, opponent.score);
+        if (stolen > 0) {
+          await prisma.$transaction([
+            prisma.team.update({ where: { id: opponent.id }, data: { score: { decrement: stolen } } }),
+            prisma.team.update({ where: { id: team.id }, data: { score: { increment: stolen } } }),
+          ]);
+        }
+      }
+    }
+  }
+
+  const updated = await prisma.teamLifeline.update({ where: { id: req.params.lifelineId }, data: { used: true } });
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
+  res.json({ lifeline: updated, teams, stolen });
 });
 
 const varSchema = z.object({ questionId: z.string(), note: z.string().min(2) });

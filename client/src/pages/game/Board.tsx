@@ -142,15 +142,20 @@ export default function Board() {
     const lifeline = activeTeam.lifelines.find((l) => l.type === type && !l.used);
     if (!lifeline) return;
     try {
-      await api.post(`/games/${id}/lifelines/${lifeline.id}/use`);
-      setBoard({
-        ...board,
-        teams: board.teams.map((t) => (t.id === activeTeam.id ? { ...t, lifelines: t.lifelines.map((l) => (l.id === lifeline.id ? { ...l, used: true } : l)) } : t)),
-      });
+      const { data } = await api.post(`/games/${id}/lifelines/${lifeline.id}/use`, { gameQuestionId: openTile?.gameQuestionId });
+      // The route re-fetches teams (with players + lifelines) after marking
+      // the lifeline used and, for STEAL_POINTS, moving score between
+      // teams — trusting that response keeps this in sync with the server
+      // instead of recomputing scores locally.
+      setBoard({ ...board, teams: data.teams });
       if (type === 'PHONE_A_FRIEND') setPhoneOverlay(60);
       if (type === 'TRAP') setSwapTurnForTile(true);
       if (type === 'PICK_ANSWERER') setPickedPlayer(activeTeam.players[Math.floor(Math.random() * activeTeam.players.length)]?.name || null);
       if (type === 'DOUBLE_ANSWER') toast.success('يمكن للفريق تجربة إجابتين لهذا السؤال');
+      if (type === 'STEAL_POINTS') {
+        if (data.stolen > 0) toast.success(`سرقت ${data.stolen} نقطة من الفريق المنافس! 💰`);
+        else toast('الفريق المنافس ما عنده نقاط تُسرق حاليا', { icon: '😅' });
+      }
     } catch (err) {
       toast.error(apiErrorMessage(err));
     }

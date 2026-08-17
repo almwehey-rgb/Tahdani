@@ -71,7 +71,7 @@ export interface DiscountCode {
   createdAt: string;
 }
 
-export const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER'] as const;
+export const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER', 'STEAL_POINTS'] as const;
 export type LifelineType = (typeof LIFELINE_TYPES)[number];
 
 export const LIFELINE_LABELS: Record<LifelineType, { label: string; icon: string; desc: string }> = {
@@ -80,6 +80,7 @@ export const LIFELINE_LABELS: Record<LifelineType, { label: string; icon: string
   MORE_HINT: { label: 'وضحلي أكثر', icon: '💡', desc: 'احصل على تلميح إضافي للسؤال' },
   TRAP: { label: 'الفخ', icon: '🕳️', desc: 'أعط السؤال للفريق المنافس مع وقت أقل' },
   PICK_ANSWERER: { label: 'اختر المجيب', icon: '🎯', desc: 'حدد لاعبا معينا من فريقك ليجيب' },
+  STEAL_POINTS: { label: 'اسرق النقاط', icon: '💰', desc: 'اسحب نقاط السؤال الحالي من رصيد الفريق المنافس لصالحك' },
 };
 
 export interface Player {
