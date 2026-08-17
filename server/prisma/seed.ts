@@ -1,6 +1,18 @@
 import { PrismaClient } from '@prisma/client';
+import extraQuestionsRaw from './data/extraQuestions.json';
 
 const prisma = new PrismaClient();
+
+// AI-drafted bulk question bank (~50 per category), keyed by category name.
+// Merged into the hand-picked starter questions below so every category
+// has real variety instead of the same 3 tiles every game.
+const extraQuestions = extraQuestionsRaw as unknown as Record<
+  string,
+  { text: string; answer: string; points: number; hint?: string | null }[]
+>;
+function extrasFor(categoryName: string) {
+  return (extraQuestions[categoryName] ?? []).map((q) => ({ ...q, hint: q.hint ?? undefined }));
+}
 
 async function main() {
   // ---------- Shared access code ----------
@@ -172,11 +184,12 @@ async function main() {
         data: { name: c.name, icon: c.icon, color: c.color, type: c.type || 'PERMANENT' },
       });
     }
-    for (const q of c.questions) {
+    for (const q of [...c.questions, ...extrasFor(c.name)]) {
       // Drawing questions all share the same instruction text (only the
-      // answer/points differ per tier), so text alone can't tell them
-      // apart — points must be part of the dedup key too.
-      const exists = await prisma.question.findFirst({ where: { categoryId: category.id, text: q.text, points: q.points } });
+      // answer differs per word), so text alone — or even text+points,
+      // since many words share a tier — can't tell them apart. The answer
+      // must be part of the dedup key too.
+      const exists = await prisma.question.findFirst({ where: { categoryId: category.id, text: q.text, answer: q.answer } });
       if (!exists) {
         await prisma.question.create({
           data: {
@@ -204,8 +217,8 @@ async function main() {
     { text: 'كم عدد ركعات صلاة التراويح المتعارف عليها في أغلب المساجد؟', answer: '20 ركعة (يختلف حسب المذهب)', points: 200 },
     { text: 'ما اسم الليلة التي يُستحب فيها إحياء العشر الأواخر من رمضان بحثا عنها؟', answer: 'ليلة القدر', points: 300 },
   ];
-  for (const q of ramadanQuestions) {
-    const exists = await prisma.question.findFirst({ where: { categoryId: ramadan.id, text: q.text } });
+  for (const q of [...ramadanQuestions, ...extrasFor('رمضانيات')]) {
+    const exists = await prisma.question.findFirst({ where: { categoryId: ramadan.id, text: q.text, answer: q.answer } });
     if (!exists) await prisma.question.create({ data: { categoryId: ramadan.id, ...q } });
   }
 
@@ -221,8 +234,8 @@ async function main() {
     { text: 'ما لون السماء في يوم صافٍ؟', answer: 'أزرق', points: 200 },
     { text: 'كم عدد أرجل العنكبوت؟', answer: '8 أرجل', points: 300 },
   ];
-  for (const q of kidsQuestions) {
-    const exists = await prisma.question.findFirst({ where: { categoryId: kids.id, text: q.text } });
+  for (const q of [...kidsQuestions, ...extrasFor('عالم الأطفال')]) {
+    const exists = await prisma.question.findFirst({ where: { categoryId: kids.id, text: q.text, answer: q.answer } });
     if (!exists) await prisma.question.create({ data: { categoryId: kids.id, ...q } });
   }
 

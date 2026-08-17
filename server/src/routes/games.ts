@@ -7,6 +7,18 @@ const router = Router();
 
 const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER'] as const;
 
+// Picks one random question per point tier (100/200/300) instead of always
+// the same fixed questions, so a larger question bank actually adds variety
+// across games instead of sitting unused.
+function pickBoardQuestions<T extends { points: number }>(questions: T[]): T[] {
+  const picked: T[] = [];
+  for (const points of [100, 200, 300]) {
+    const pool = questions.filter((q) => q.points === points);
+    if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return picked;
+}
+
 const teamSchema = z.object({
   name: z.string().min(2).max(22),
   color: z.string().default('#6C4CE0'),
@@ -74,7 +86,7 @@ router.post('/', requireAuth, async (req: AuthedRequest, res) => {
 
     for (const category of categories) {
       await tx.gameCategory.create({ data: { gameId: createdGame.id, categoryId: category.id } });
-      for (const question of category.questions.slice(0, 3)) {
+      for (const question of pickBoardQuestions(category.questions)) {
         await tx.gameQuestion.create({ data: { gameId: createdGame.id, questionId: question.id } });
       }
     }
