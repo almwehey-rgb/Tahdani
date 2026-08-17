@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { api, apiErrorMessage } from '../api/client';
+import { api } from '../api/client';
 import { useAuthStore } from '../store/auth';
 import type { Purchase } from '../api/types';
 import Spinner from '../components/Spinner';
 
 export default function Account() {
-  const { user, setUser, logout } = useAuthStore();
-  const [name, setName] = useState(user?.name || '');
+  const { user, logout } = useAuthStore();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -17,17 +15,6 @@ export default function Account() {
     api.get('/purchases/mine').then(({ data }) => setPurchases(data.purchases)).finally(() => setLoading(false));
   }, []);
 
-  async function saveName() {
-    if (name.trim().length < 2) return toast.error('الاسم مطلوب');
-    try {
-      const { data } = await api.put('/auth/me', { name: name.trim() });
-      setUser(data.user);
-      toast.success('تم تحديث الاسم');
-    } catch (err) {
-      toast.error(apiErrorMessage(err));
-    }
-  }
-
   if (!user) return null;
 
   return (
@@ -35,14 +22,7 @@ export default function Account() {
       <h1 className="text-2xl font-extrabold">حسابي</h1>
 
       <div className="card p-5">
-        <label className="label">الاسم</label>
-        <div className="flex gap-2 mb-4">
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
-          <button className="btn btn-primary !px-5" onClick={saveName}>
-            حفظ
-          </button>
-        </div>
-        <p className="text-sm text-[var(--color-ink-dim)]">رقم الهاتف: {user.phone}</p>
+        <p className="font-bold text-lg mb-1">{user.name}</p>
         <p className="text-sm text-[var(--color-ink-dim)]">الألعاب المتبقية: {user.remainingGames}</p>
       </div>
 

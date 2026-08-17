@@ -15,7 +15,7 @@ router.get('/mine', requireAuth, async (req: AuthedRequest, res) => {
 
 router.get('/admin/all', requireAuth, requireAdmin, async (_req, res) => {
   const purchases = await prisma.purchase.findMany({
-    include: { package: true, user: { select: { name: true, phone: true } } },
+    include: { package: true, user: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
     take: 200,
   });

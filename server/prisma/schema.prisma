@@ -11,9 +11,7 @@ datasource db {
 
 model User {
   id             String   @id @default(cuid())
-  phone          String   @unique
-  countryCode    String   @default("+973")
-  name           String
+  name           String   @unique
   role           String   @default("USER") // USER | ADMIN
   remainingGames Int      @default(1) // free first game
   createdAt      DateTime @default(now())
@@ -25,15 +23,12 @@ model User {
   tournaments   Tournament[]
 }
 
-model OtpCode {
-  id        String   @id @default(cuid())
-  phone     String
-  code      String
-  expiresAt DateTime
-  consumed  Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@index([phone])
+// Singleton row (id is always "singleton") holding the one shared access
+// code everyone logs in with — editable from the admin panel instead of
+// requiring a redeploy to change.
+model AppSetting {
+  id         String @id @default("singleton")
+  accessCode String
 }
 
 // ---------- Commerce ----------

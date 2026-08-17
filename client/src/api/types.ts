@@ -1,7 +1,5 @@
 export interface User {
   id: string;
-  phone: string;
-  countryCode: string;
   name: string;
   role: 'USER' | 'ADMIN';
   remainingGames: number;

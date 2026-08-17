@@ -10,7 +10,7 @@ interface AdminPurchase {
   provider: string | null;
   createdAt: string;
   package: { name: string; currency: string };
-  user: { name: string; phone: string };
+  user: { name: string };
 }
 
 export default function AdminPurchases() {
@@ -39,9 +39,7 @@ export default function AdminPurchases() {
         <tbody>
           {purchases.map((p) => (
             <tr key={p.id} className="border-b border-[var(--color-border)]">
-              <td className="py-2 px-2">
-                {p.user.name} <span className="text-[var(--color-ink-faint)]">({p.user.phone})</span>
-              </td>
+              <td className="py-2 px-2">{p.user.name}</td>
               <td className="py-2 px-2">{p.package.name}</td>
               <td className="py-2 px-2">
                 {p.amount.toFixed(3)} {p.package.currency}

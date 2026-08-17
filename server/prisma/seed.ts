@@ -3,13 +3,18 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // ---------- Shared access code ----------
+  await prisma.appSetting.upsert({
+    where: { id: 'singleton' },
+    update: {},
+    create: { id: 'singleton', accessCode: 'TAHDANI' },
+  });
+
   // ---------- Admin ----------
   await prisma.user.upsert({
-    where: { phone: '+97339990000' },
+    where: { name: 'مشرف تحدّني' },
     update: { role: 'ADMIN' },
     create: {
-      phone: '+97339990000',
-      countryCode: '+973',
       name: 'مشرف تحدّني',
       role: 'ADMIN',
       remainingGames: 999,

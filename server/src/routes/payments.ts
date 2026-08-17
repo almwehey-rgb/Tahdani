@@ -68,7 +68,6 @@ router.post('/checkout', requireAuth, async (req: AuthedRequest, res) => {
       amount,
       currency: pkg.currency,
       customerName: user.name,
-      customerPhone: user.phone,
       description: `${pkg.name} — تحدّني`,
       callbackUrl,
       errorUrl: callbackUrl,
