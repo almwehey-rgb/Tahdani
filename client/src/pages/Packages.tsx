@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../api/client';
 import type { Package } from '../api/types';
 import Spinner from '../components/Spinner';
 
 export default function Packages() {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Package | null>(null);
@@ -24,7 +26,12 @@ export default function Packages() {
         discountCode: discountCode.trim() || undefined,
         purpose: 'SELF',
       });
-      window.location.href = data.redirectUrl;
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        // Discount code brought the price to zero — nothing to pay, already fulfilled.
+        navigate(`/payment/callback?purchaseId=${data.purchaseId}`);
+      }
     } catch (err) {
       toast.error(apiErrorMessage(err));
       setPaying(false);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../api/client';
 import { useAuthStore } from '../store/auth';
@@ -6,6 +7,7 @@ import type { GiftCode, Package } from '../api/types';
 import Spinner from '../components/Spinner';
 
 export default function Gifts() {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [selected, setSelected] = useState<Package | null>(null);
   const [toPhone, setToPhone] = useState('');
@@ -42,7 +44,11 @@ export default function Gifts() {
         purpose: 'GIFT',
         giftToPhone: toPhone.trim() || undefined,
       });
-      window.location.href = data.redirectUrl;
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      } else {
+        navigate(`/payment/callback?purchaseId=${data.purchaseId}`);
+      }
     } catch (err) {
       toast.error(apiErrorMessage(err));
       setBusy(false);

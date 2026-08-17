@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../db';
 import { requireAuth, AuthedRequest } from '../middleware/auth';
 import { getGateway } from '../gateways';
@@ -50,6 +51,14 @@ router.post('/checkout', requireAuth, async (req: AuthedRequest, res) => {
     },
   });
 
+  // A 100%-off code (or any code that zeroes the price) never needs a real
+  // gateway session — payment providers reject zero-amount charges anyway,
+  // and there's nothing to collect. Fulfill it immediately instead.
+  if (amount <= 0) {
+    const { giftCode } = await fulfillPaidPurchase({ ...purchase, package: pkg });
+    return res.status(201).json({ purchaseId: purchase.id, redirectUrl: null, free: true, giftCode: giftCode?.code || null });
+  }
+
   const gateway = getGateway();
   const callbackUrl = `${FRONTEND_URL}/payment/callback?purchaseId=${purchase.id}`;
 
@@ -71,13 +80,42 @@ router.post('/checkout', requireAuth, async (req: AuthedRequest, res) => {
       data: { provider: gateway.name, providerRef, redirectUrl },
     });
 
-    res.status(201).json({ purchaseId: purchase.id, redirectUrl });
+    res.status(201).json({ purchaseId: purchase.id, redirectUrl, free: false });
   } catch (err) {
     await prisma.purchase.update({ where: { id: purchase.id }, data: { status: 'FAILED' } });
     console.error('Payment createPayment error:', err);
     res.status(502).json({ error: 'تعذر إنشاء عملية الدفع، حاول مرة أخرى' });
   }
 });
+
+type PurchaseWithPackage = Prisma.PurchaseGetPayload<{ include: { package: true } }>;
+
+// Shared "mark paid and grant what was purchased" step — used both when a
+// real gateway confirms payment and when a 100%-off code skips the gateway
+// entirely. Never called with a purchase that's already PAID (callers check
+// that first) so it never double-grants credits or mints a second gift code.
+async function fulfillPaidPurchase(purchase: PurchaseWithPackage) {
+  const giftCode = await prisma.$transaction(async (tx) => {
+    await tx.purchase.update({ where: { id: purchase.id }, data: { status: 'PAID', paidAt: new Date() } });
+    if (purchase.discountCodeId) {
+      await tx.discountCode.update({ where: { id: purchase.discountCodeId }, data: { usedCount: { increment: 1 } } });
+    }
+    if (purchase.purpose === 'GIFT') {
+      return tx.giftCode.create({
+        data: {
+          code: generateCode('GIFT'),
+          purchaseId: purchase.id,
+          packageId: purchase.packageId,
+          fromUserId: purchase.userId,
+          toPhone: purchase.giftToPhone,
+        },
+      });
+    }
+    await tx.user.update({ where: { id: purchase.userId }, data: { remainingGames: { increment: purchase.package.gamesCount } } });
+    return null;
+  });
+  return { giftCode };
+}
 
 async function finalizePurchase(purchaseId: string) {
   const purchase = await prisma.purchase.findUnique({ where: { id: purchaseId }, include: { package: true } });
@@ -96,27 +134,7 @@ async function finalizePurchase(purchaseId: string) {
     return { purchase: { ...purchase, status: 'FAILED' as const }, giftCode: null, alreadyFinalized: false };
   }
 
-  let giftCode = null;
-  await prisma.$transaction(async (tx) => {
-    await tx.purchase.update({ where: { id: purchase.id }, data: { status: 'PAID', paidAt: new Date() } });
-    if (purchase.discountCodeId) {
-      await tx.discountCode.update({ where: { id: purchase.discountCodeId }, data: { usedCount: { increment: 1 } } });
-    }
-    if (purchase.purpose === 'GIFT') {
-      giftCode = await tx.giftCode.create({
-        data: {
-          code: generateCode('GIFT'),
-          purchaseId: purchase.id,
-          packageId: purchase.packageId,
-          fromUserId: purchase.userId,
-          toPhone: purchase.giftToPhone,
-        },
-      });
-    } else {
-      await tx.user.update({ where: { id: purchase.userId }, data: { remainingGames: { increment: purchase.package.gamesCount } } });
-    }
-  });
-
+  const { giftCode } = await fulfillPaidPurchase(purchase);
   const updated = await prisma.purchase.findUnique({ where: { id: purchase.id } });
   return { purchase: updated!, giftCode, alreadyFinalized: false };
 }

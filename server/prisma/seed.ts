@@ -28,11 +28,19 @@ async function main() {
     if (!existing) await prisma.package.create({ data: { ...p, currency: 'BHD' } });
   }
 
-  // ---------- Discount code ----------
+  // ---------- Discount codes ----------
   const existingDiscount = await prisma.discountCode.findUnique({ where: { code: 'WELCOME10' } });
   if (!existingDiscount) {
     await prisma.discountCode.create({
       data: { code: 'WELCOME10', percentOff: 10, maxUses: 500, active: true },
+    });
+  }
+
+  // 100% off — makes checkout free (no gateway charge at all, see payments.ts)
+  const existingTurki = await prisma.discountCode.findUnique({ where: { code: 'TURKI' } });
+  if (!existingTurki) {
+    await prisma.discountCode.create({
+      data: { code: 'TURKI', percentOff: 100, maxUses: 100000, active: true },
     });
   }
 
