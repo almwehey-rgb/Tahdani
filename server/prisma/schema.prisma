@@ -1,0 +1,282 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Users & Auth ----------
+
+model User {
+  id             String   @id @default(cuid())
+  phone          String   @unique
+  countryCode    String   @default("+973")
+  name           String
+  role           String   @default("USER") // USER | ADMIN
+  remainingGames Int      @default(1) // free first game
+  createdAt      DateTime @default(now())
+
+  purchases     Purchase[]
+  giftsSent     GiftCode[]      @relation("GiftSender")
+  giftsRedeemed GiftCode[]      @relation("GiftRedeemer")
+  games         Game[]
+  tournaments   Tournament[]
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+// ---------- Commerce ----------
+
+model Package {
+  id         String     @id @default(cuid())
+  name       String
+  gamesCount Int
+  price      Float
+  currency   String     @default("BHD")
+  active     Boolean    @default(true)
+  sortOrder  Int        @default(0)
+  purchases  Purchase[]
+  giftCodes  GiftCode[]
+}
+
+model DiscountCode {
+  id         String     @id @default(cuid())
+  code       String     @unique
+  percentOff Int // 0-100
+  maxUses    Int        @default(1)
+  usedCount  Int        @default(0)
+  active     Boolean    @default(true)
+  expiresAt  DateTime?
+  createdAt  DateTime   @default(now())
+  purchases  Purchase[]
+}
+
+model Purchase {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  packageId      String
+  package        Package   @relation(fields: [packageId], references: [id])
+  discountCodeId String?
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  amount         Float
+  status         String    @default("PENDING") // PENDING | PAID | FAILED
+  providerRef    String? // mock payment gateway reference
+  createdAt      DateTime  @default(now())
+  paidAt         DateTime?
+}
+
+model GiftCode {
+  id               String    @id @default(cuid())
+  code             String    @unique
+  packageId        String
+  package          Package   @relation(fields: [packageId], references: [id])
+  fromUserId       String
+  fromUser         User      @relation("GiftSender", fields: [fromUserId], references: [id])
+  toPhone          String?
+  redeemedByUserId String?
+  redeemedByUser   User?     @relation("GiftRedeemer", fields: [redeemedByUserId], references: [id])
+  status           String    @default("SENT") // SENT | REDEEMED
+  createdAt        DateTime  @default(now())
+  redeemedAt       DateTime?
+}
+
+// ---------- Content: categories & questions ----------
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String   @default("🎯")
+  color     String   @default("#6C4CE0")
+  type      String   @default("PERMANENT") // PERMANENT | SEASONAL | KIDS | DRAWING | STUDENT
+  seasonTag String? // e.g. RAMADAN_2026
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  questions     Question[]
+  gameCategories GameCategory[]
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  text       String
+  answer     String
+  hint       String?
+  points     Int      @default(200) // 100/200/300 tiers
+  isDrawing  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  gameQuestions GameQuestion[]
+  varReports    VarReport[]
+}
+
+model VarReport {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  gameId     String?
+  note       String
+  status     String   @default("OPEN") // OPEN | RESOLVED
+  createdAt  DateTime @default(now())
+}
+
+// ---------- Core game session ----------
+
+model Game {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  mode       String    @default("CLASSIC") // CLASSIC | KIDS | STUDENT
+  status     String    @default("ACTIVE") // ACTIVE | FINISHED
+  winnerTeamId String?
+  isTie      Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  teams          Team[]
+  gameCategories GameCategory[]
+  gameQuestions  GameQuestion[]
+}
+
+model Team {
+  id      String   @id @default(cuid())
+  gameId  String
+  game    Game     @relation(fields: [gameId], references: [id])
+  name    String
+  color   String   @default("#6C4CE0")
+  score   Int      @default(0)
+  players Player[]
+  lifelines TeamLifeline[]
+
+  answeredQuestions GameQuestion[]
+}
+
+model Player {
+  id     String @id @default(cuid())
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
+  name   String
+}
+
+model TeamLifeline {
+  id     String  @id @default(cuid())
+  teamId String
+  team   Team    @relation(fields: [teamId], references: [id])
+  type   String // PHONE_A_FRIEND | DOUBLE_ANSWER | MORE_HINT | TRAP | PICK_ANSWERER
+  used   Boolean @default(false)
+}
+
+model GameCategory {
+  id         String   @id @default(cuid())
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model GameQuestion {
+  id             String    @id @default(cuid())
+  gameId         String
+  game           Game      @relation(fields: [gameId], references: [id])
+  questionId     String
+  question       Question  @relation(fields: [questionId], references: [id])
+  answeredByTeamId String?
+  answeredByTeam Team?     @relation(fields: [answeredByTeamId], references: [id])
+  isCorrect      Boolean?
+  isOpened       Boolean   @default(false)
+  usedVar        Boolean   @default(false)
+}
+
+// ---------- Tournaments ----------
+
+model Tournament {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  name           String
+  format         String   @default("KNOCKOUT") // KNOCKOUT | ROUND_ROBIN
+  status         String   @default("SETUP") // SETUP | IN_PROGRESS | FINISHED
+  championTeam   String?
+  createdAt      DateTime @default(now())
+
+  teams   TournamentTeam[]
+  matches TournamentMatch[]
+}
+
+model TournamentTeam {
+  id           String @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  name         String
+}
+
+model TournamentMatch {
+  id           String   @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  round        Int
+  orderInRound Int      @default(0)
+  teamAName    String?
+  teamBName    String?
+  teamAScore   Int      @default(0)
+  teamBScore   Int      @default(0)
+  winnerName   String?
+  status       String   @default("PENDING") // PENDING | DONE | BYE
+}
+
+// ---------- Student / study mode ----------
+
+model StudentSubject {
+  id       String @id @default(cuid())
+  name     String
+  grade    String // e.g. "الصف السادس"
+  semester String // "الفصل الأول" | "الفصل الثاني"
+  active   Boolean @default(true)
+
+  questions StudentQuestion[]
+}
+
+model StudentQuestion {
+  id           String         @id @default(cuid())
+  subjectId    String
+  subject      StudentSubject @relation(fields: [subjectId], references: [id])
+  text         String
+  choices      String // JSON-encoded string[]
+  correctIndex Int
+}
+
+// ---------- TV show ----------
+
+model Episode {
+  id          String   @id @default(cuid())
+  title       String
+  number      Int
+  airDate     DateTime?
+  description String?
+  videoUrl    String?
+  createdAt   DateTime @default(now())
+}
+
+model TvApplication {
+  id            String   @id @default(cuid())
+  teamName      String
+  phone         String
+  membersCount  Int
+  gender        String // MALE | FEMALE
+  agreedToTerms Boolean  @default(false)
+  status        String   @default("PENDING") // PENDING | REVIEWED
+  createdAt     DateTime @default(now())
+}

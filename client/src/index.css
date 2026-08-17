@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Cairo", "Tahoma", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #0f1024;
+  --color-bg-soft: #171a3a;
+  --color-surface: #1e2148;
+  --color-surface-hi: #262a5c;
+  --color-border: #34397a;
+
+  --color-brand: #7c5cff;
+  --color-brand-hi: #9b82ff;
+  --color-brand-dim: #5a3fd6;
+  --color-gold: #ffc94d;
+  --color-gold-hi: #ffdb85;
+
+  --color-ink: #f3f2ff;
+  --color-ink-dim: #b7b6de;
+  --color-ink-faint: #7f7db0;
+
+  --color-success: #34d399;
+  --color-danger: #ff5c72;
+  --color-team-a: #ff7a4d;
+  --color-team-b: #3fc6ff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: radial-gradient(circle at 20% -10%, #2a1f66 0%, var(--color-bg) 45%) fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-color: var(--color-surface-hi) transparent;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  border-radius: 0.9rem;
+  padding: 0.75rem 1.5rem;
+  transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand-dim));
+  color: white;
+  box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--color-gold), #f5a623);
+  color: #241500;
+  box-shadow: 0 8px 24px -8px rgba(255, 201, 77, 0.5);
+}
+.btn-gold:hover:not(:disabled) { filter: brightness(1.06); }
+
+.btn-ghost {
+  background: var(--color-surface-hi);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--color-border); }
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-danger), #c23a4e);
+  color: white;
+}
+
+.input {
+  width: 100%;
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  padding: 0.7rem 1rem;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.input:focus { border-color: var(--color-brand-hi); }
+.input::placeholder { color: var(--color-ink-faint); }
+
+.label {
+  font-size: 0.85rem;
+  color: var(--color-ink-dim);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop { animation: pop-in 0.25s ease-out; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 92, 114, 0.55); }
+  100% { box-shadow: 0 0 0 14px rgba(255, 92, 114, 0); }
+}
+.animate-pulse-ring { animation: pulse-ring 1.4s ease-out infinite; }
