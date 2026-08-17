@@ -18,12 +18,17 @@
 ## البنية التقنية
 
 - **العميل (client/)**: React + TypeScript + Vite + Tailwind v4 + React Router + Zustand، بتصميم RTL كامل وخط Cairo
-- **الخادم (server/)**: Node.js + Express + TypeScript + Prisma + SQLite
+- **الخادم (server/)**: Node.js + Express + TypeScript + Prisma + PostgreSQL، مُجهّز للعمل كدوال Vercel Serverless
 
 ## التشغيل محليا
 
+يحتاج المشروع قاعدة بيانات PostgreSQL محليا (تقدر تشغّل وحدة عبر Docker: `docker run --name tahdani-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=tahdani -p 5432:5432 -d postgres:16`، أو أي تنصيب Postgres محلي عندك).
+
 ```bash
 npm install
+
+# انسخ ملف البيئة وعدّل DATABASE_URL/DIRECT_URL ليشيرا إلى قاعدة Postgres المحلية
+cp server/.env.example server/.env
 
 # إعداد قاعدة البيانات وتوليد البيانات التجريبية (فئات، أسئلة، باقات، إلخ)
 cd server
@@ -38,11 +43,7 @@ npm run dev:server
 npm run dev:client
 ```
 
-قبل تشغيل الخادم، انسخ `server/.env.example` إلى `server/.env` وعدّل القيم (خصوصا مفاتيح بوابة الدفع، راجع القسم أدناه):
-
-```bash
-cp server/.env.example server/.env
-```
+عدّل بقية القيم في `server/.env` (خصوصا مفاتيح بوابة الدفع، راجع القسم أدناه) قبل تشغيل الخادم.
 
 افتح `http://localhost:5173`.
 
@@ -63,6 +64,32 @@ cp server/.env.example server/.env
 - **Mock** — يُستخدم تلقائيا كبديل احتياطي إذا اخترت بوابة بدون تزويدها بمفتاح، حتى يبقى المشروع قابلا للتشغيل بدون أي مفتاح API.
 
 **ملاحظة عن الـ webhook**: في التطوير المحلي (`localhost`) لا يمكن لأي بوابة خارجية الوصول لجهازك، لذلك آلية التحقق الأساسية هي `verify` عند رجوع المستخدم من صفحة الدفع (تعمل محليا بدون أي إعداد إضافي). الـ webhook يعمل تلقائيا كطبقة تأكيد إضافية فقط بعد نشر الخادم على دومين عام وضبط `SERVER_PUBLIC_URL`.
+
+## النشر على Vercel
+
+الفرونت إند (`client/`) والباك إند (`server/`) يُنشران كمشروعين منفصلين على Vercel، لكن الزائر يتعامل مع رابط واحد فقط: مشروع `client/` يحتوي `client/vercel.json` الذي يعيد توجيه (rewrite) أي طلب لـ `/api/*` داخليا إلى مشروع الخادم — دون أي إعادة توجيه ظاهرة للمتصفح ودون مشاكل CORS، لأن المتصفح لا يغادر دومين الفرونت إند إطلاقا.
+
+### 1. قاعدة بيانات Postgres
+
+جهّز قاعدة بيانات Postgres (Neon أو Supabase عبر تكامل Vercel Marketplace، أو أي مزوّد آخر). احصل على رابطين:
+- **رابط pooled** (يمر عبر PgBouncer) → `DATABASE_URL`
+- **رابط مباشر (direct)** بدون pooling → `DIRECT_URL` (يُستخدم فقط للـ migrations)
+
+معظم المزودين (مثل Neon) يعطونك الاثنين جاهزين من لوحة التحكم.
+
+### 2. مشروع الخادم (server/)
+
+- استورد نفس مستودع GitHub كمشروع Vercel جديد، واضبط **Root Directory** = `server`.
+- أضف متغيرات البيئة (Production + Preview): `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `FRONTEND_URL` (رابط مشروع الفرونت إند)، وبيانات بوابة الدفع (`PAYMENT_PROVIDER`, `TAP_SECRET_KEY`, ...).
+- عند أول نشر ينفّذ Vercel تلقائيا `npm run vercel-build` (يشغّل `prisma generate` ثم `prisma migrate deploy` لإنشاء الجداول على قاعدة Postgres)، ثم يشغّل الـ API كدالة Serverless واحدة (`server/api/index.ts`) تغلّف تطبيق Express كاملا.
+- بعد أول نشر ناجح، شغّل `npx ts-node prisma/seed.ts` محليا مع `DATABASE_URL` مضبوط على قاعدة الإنتاج لتعبئة بيانات تجريبية أولية (فئات، باقات، الخ)، أو أضف المحتوى يدويا من `/admin`.
+
+### 3. مشروع الفرونت إند (client/, المنشور مسبقا)
+
+- عدّل `client/vercel.json` ليشير `destination` إلى رابط مشروع الخادم الفعلي (مثلا `https://tahdani-server.vercel.app/api/:path*`) إذا اختلف عن الافتراضي.
+- لا حاجة لأي تعديل آخر في كود الواجهة — `client/src/api/client.ts` يستخدم أصلا مسارا نسبيا (`/api`) وسيعمل تلقائيا عبر الـ rewrite.
+
+بعد ربط المشروعين، فتح `https://tahdani-client.vercel.app` يشغّل الفرونت إند والباك إند معا من رابط واحد.
 
 ## البيانات التجريبية
 
