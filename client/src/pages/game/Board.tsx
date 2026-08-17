@@ -116,7 +116,16 @@ export default function Board() {
     try {
       if (teamId) {
         const { data } = await api.post(`/games/${id}/questions/${openTile.gameQuestionId}/answer`, { teamId, isCorrect: true });
-        setBoard({ ...board, teams: data.teams, tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: teamId, isCorrect: true } : t)) });
+        // Merge in just the score — trusting the response's team shape
+        // wholesale has broken this screen before (a route that returned
+        // teams without players/lifelines silently wiped both everywhere
+        // they're read, crashing the whole page on the next render).
+        const scoreByTeamId = new Map<string, number>(data.teams.map((t: { id: string; score: number }) => [t.id, t.score]));
+        setBoard({
+          ...board,
+          teams: board.teams.map((t) => (scoreByTeamId.has(t.id) ? { ...t, score: scoreByTeamId.get(t.id)! } : t)),
+          tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: teamId, isCorrect: true } : t)),
+        });
       } else {
         await api.post(`/games/${id}/questions/${openTile.gameQuestionId}/answer`, { teamId: activeTeam!.id, isCorrect: false });
         setBoard({ ...board, tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: activeTeam!.id, isCorrect: false } : t)) });

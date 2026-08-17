@@ -167,7 +167,10 @@ router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedReques
       : []),
   ]);
 
-  const teams = await prisma.team.findMany({ where: { gameId: game.id } });
+  // Must match the shape /board returns (players + lifelines) — the client
+  // replaces its whole teams array with this response, so dropping either
+  // relation here silently breaks every screen that reads team.lifelines.
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
   res.json({ teams });
 });
 
