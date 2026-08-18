@@ -14,7 +14,7 @@ const TILES_PER_TIER = 2;
 // actually adds variety across games instead of sitting unused.
 function pickBoardQuestions<T extends { points: number }>(questions: T[]): T[] {
   const picked: T[] = [];
-  for (const points of [100, 200, 300]) {
+  for (const points of [200, 400, 600]) {
     const pool = questions.filter((q) => q.points === points);
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));

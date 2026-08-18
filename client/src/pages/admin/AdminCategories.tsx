@@ -141,9 +141,9 @@ export default function AdminCategories() {
                   <input className="input" placeholder="الإجابة" value={newQ.answer} onChange={(e) => setNewQ({ ...newQ, answer: e.target.value })} />
                   <input className="input" placeholder="تلميح (اختياري)" value={newQ.hint} onChange={(e) => setNewQ({ ...newQ, hint: e.target.value })} />
                   <select className="input" value={newQ.points} onChange={(e) => setNewQ({ ...newQ, points: Number(e.target.value) })}>
-                    <option value={100}>100</option>
                     <option value={200}>200</option>
-                    <option value={300}>300</option>
+                    <option value={400}>400</option>
+                    <option value={600}>600</option>
                   </select>
                 </div>
                 <button className="btn btn-primary text-sm" onClick={() => addQuestion(cat.id)}>
