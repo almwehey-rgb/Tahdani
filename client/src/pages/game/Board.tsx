@@ -140,39 +140,54 @@ export default function Board() {
 
   async function markAnswer(teamId: string | null) {
     if (!openTile || !board) return;
+    const gqId = openTile.gameQuestionId;
+    const points = openTile.points;
+    const resolvedTeamId = teamId ?? activeTeam!.id;
+    const isCorrect = !!teamId;
+    const previousTeams = board.teams;
+    const previousTiles = board.tiles;
+    const previousTurn = turn;
+    const wasDoubleActive = doublePointsActive;
+
+    // Close the modal and reflect the result immediately — waiting on the
+    // round trip(s) before doing this is what made every answer feel
+    // laggy. Reconciled with the server's authoritative numbers below,
+    // and rolled all the way back if the request itself fails.
+    setBoard({
+      ...board,
+      teams: isCorrect
+        ? board.teams.map((t) => (t.id === resolvedTeamId ? { ...t, score: t.score + (wasDoubleActive ? points * 2 : points) } : t))
+        : board.teams,
+      tiles: board.tiles.map((t) => (t.gameQuestionId === gqId ? { ...t, answeredByTeamId: resolvedTeamId, isCorrect } : t)),
+    });
+    setOpenTile(null);
+    setDoublePointsActive(false);
+    setTurn((t) => (t + 1) % board.teams.length);
+
     try {
-      if (teamId) {
-        const { data } = await api.post(`/games/${id}/questions/${openTile.gameQuestionId}/answer`, { teamId, isCorrect: true });
-        // Merge in just the score — trusting the response's team shape
-        // wholesale has broken this screen before (a route that returned
-        // teams without players/lifelines silently wiped both everywhere
-        // they're read, crashing the whole page on the next render).
-        const scoreByTeamId = new Map<string, number>(data.teams.map((t: { id: string; score: number }) => [t.id, t.score]));
-        if (doublePointsActive) {
-          // Awarded as a second adjust-score on top of the normal points
-          // the /answer call above already gave — reusing that endpoint
-          // instead of teaching the server a new "double" concept.
-          try {
-            const { data: bonus } = await api.post(`/games/${id}/teams/${teamId}/adjust-score`, { delta: openTile.points });
-            scoreByTeamId.set(teamId, bonus.team.score);
-            toast.success(`ضاعفت النقاط! +${openTile.points} إضافية 2️⃣`);
-          } catch (err) {
-            toast.error(apiErrorMessage(err));
-          }
+      const { data } = await api.post(`/games/${id}/questions/${gqId}/answer`, { teamId: resolvedTeamId, isCorrect });
+      // Merge in just the score — trusting the response's team shape
+      // wholesale has broken this screen before (a route that returned
+      // teams without players/lifelines silently wiped both everywhere
+      // they're read, crashing the whole page on the next render).
+      const scoreByTeamId = new Map<string, number>(data.teams.map((t: { id: string; score: number }) => [t.id, t.score]));
+      setBoard((prev) => (prev ? { ...prev, teams: prev.teams.map((t) => (scoreByTeamId.has(t.id) ? { ...t, score: scoreByTeamId.get(t.id)! } : t)) } : prev));
+
+      if (isCorrect && wasDoubleActive) {
+        // Awarded as a second adjust-score on top of the normal points the
+        // /answer call above already gave — reusing that endpoint instead
+        // of teaching the server a new "double" concept.
+        try {
+          const { data: bonus } = await api.post(`/games/${id}/teams/${resolvedTeamId}/adjust-score`, { delta: points });
+          setBoard((prev) => (prev ? { ...prev, teams: prev.teams.map((t) => (t.id === resolvedTeamId ? { ...t, score: bonus.team.score } : t)) } : prev));
+          toast.success(`ضاعفت النقاط! +${points} إضافية 2️⃣`);
+        } catch (err) {
+          toast.error(apiErrorMessage(err));
         }
-        setBoard({
-          ...board,
-          teams: board.teams.map((t) => (scoreByTeamId.has(t.id) ? { ...t, score: scoreByTeamId.get(t.id)! } : t)),
-          tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: teamId, isCorrect: true } : t)),
-        });
-      } else {
-        await api.post(`/games/${id}/questions/${openTile.gameQuestionId}/answer`, { teamId: activeTeam!.id, isCorrect: false });
-        setBoard({ ...board, tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: activeTeam!.id, isCorrect: false } : t)) });
       }
-      setOpenTile(null);
-      setDoublePointsActive(false);
-      setTurn((t) => (t + 1) % board.teams.length);
     } catch (err) {
+      setBoard((prev) => (prev ? { ...prev, teams: previousTeams, tiles: previousTiles } : prev));
+      setTurn(previousTurn);
       toast.error(apiErrorMessage(err));
     }
   }
@@ -181,26 +196,57 @@ export default function Board() {
     if (!activeTeam || !board) return;
     const lifeline = activeTeam.lifelines.find((l) => l.type === type && !l.used);
     if (!lifeline) return;
+    const previousTeams = board.teams;
+
+    // Apply each lifeline's local effect immediately instead of waiting on
+    // the round trip — for STEAL_POINTS this means mirroring the server's
+    // "steal from whoever has the most" rule client-side so the toast and
+    // score update happen right away; reconciled with the server's answer
+    // below, and rolled back entirely if the request fails.
+    let optimisticStolen = 0;
+    let teams = board.teams.map((t) =>
+      t.id === activeTeam.id ? { ...t, lifelines: t.lifelines.map((l) => (l.id === lifeline.id ? { ...l, used: true } : l)) } : t,
+    );
+    if (type === 'STEAL_POINTS' && openTile) {
+      const opponent = [...teams].filter((t) => t.id !== activeTeam.id).sort((a, b) => b.score - a.score)[0];
+      if (opponent) {
+        optimisticStolen = Math.min(openTile.points, opponent.score);
+        if (optimisticStolen > 0) {
+          teams = teams.map((t) => {
+            if (t.id === opponent.id) return { ...t, score: t.score - optimisticStolen };
+            if (t.id === activeTeam.id) return { ...t, score: t.score + optimisticStolen };
+            return t;
+          });
+        }
+      }
+    }
+    setBoard({ ...board, teams });
+    if (type === 'PHONE_A_FRIEND') setPhoneOverlay(60);
+    if (type === 'TRAP') setTrapTargetIndex((turn + 1) % board.teams.length);
+    if (type === 'PICK_ANSWERER') setPickedPlayer(activeTeam.players[Math.floor(Math.random() * activeTeam.players.length)]?.name || null);
+    if (type === 'DOUBLE_ANSWER') toast.success('يمكن للفريق تجربة إجابتين لهذا السؤال');
+    if (type === 'STEAL_POINTS') {
+      if (optimisticStolen > 0) toast.success(`سرقت ${optimisticStolen} نقطة من الفريق المنافس! 💰`);
+      else toast('الفريق المنافس ما عنده نقاط تُسرق حاليا', { icon: '😅' });
+    }
+    if (type === 'DOUBLE_POINTS') {
+      setDoublePointsActive(true);
+      toast.success('راح تتضاعف نقاط هذا السؤال لو جاوبتوا صح! 2️⃣');
+    }
+
     try {
       const { data } = await api.post(`/games/${id}/lifelines/${lifeline.id}/use`, { gameQuestionId: openTile?.gameQuestionId });
       // The route re-fetches teams (with players + lifelines) after marking
       // the lifeline used and, for STEAL_POINTS, moving score between
       // teams — trusting that response keeps this in sync with the server
       // instead of recomputing scores locally.
-      setBoard({ ...board, teams: data.teams });
-      if (type === 'PHONE_A_FRIEND') setPhoneOverlay(60);
-      if (type === 'TRAP') setTrapTargetIndex((turn + 1) % board.teams.length);
-      if (type === 'PICK_ANSWERER') setPickedPlayer(activeTeam.players[Math.floor(Math.random() * activeTeam.players.length)]?.name || null);
-      if (type === 'DOUBLE_ANSWER') toast.success('يمكن للفريق تجربة إجابتين لهذا السؤال');
-      if (type === 'STEAL_POINTS') {
-        if (data.stolen > 0) toast.success(`سرقت ${data.stolen} نقطة من الفريق المنافس! 💰`);
-        else toast('الفريق المنافس ما عنده نقاط تُسرق حاليا', { icon: '😅' });
-      }
-      if (type === 'DOUBLE_POINTS') {
-        setDoublePointsActive(true);
-        toast.success('راح تتضاعف نقاط هذا السؤال لو جاوبتوا صح! 2️⃣');
-      }
+      setBoard((prev) => (prev ? { ...prev, teams: data.teams } : prev));
     } catch (err) {
+      setBoard((prev) => (prev ? { ...prev, teams: previousTeams } : prev));
+      if (type === 'PHONE_A_FRIEND') setPhoneOverlay(null);
+      if (type === 'TRAP') setTrapTargetIndex(null);
+      if (type === 'PICK_ANSWERER') setPickedPlayer(null);
+      if (type === 'DOUBLE_POINTS') setDoublePointsActive(false);
       toast.error(apiErrorMessage(err));
     }
   }
