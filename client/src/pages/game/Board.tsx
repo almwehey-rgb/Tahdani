@@ -22,8 +22,25 @@ export default function Board() {
   const [varNote, setVarNote] = useState('');
   const [pickedPlayer, setPickedPlayer] = useState<string | null>(null);
   const [trapTargetIndex, setTrapTargetIndex] = useState<number | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(72);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseRef = useRef<'main' | 'steal'>('main');
+
+  // The site header is rendered by the shared Layout, above this page, and
+  // its real height varies (mobile vs desktop nav, the credits badge, the
+  // admin link). This page must fit inside exactly what's left of the
+  // viewport below it — otherwise the bottom board row gets pushed past the
+  // fold and needs a scroll to reach, which is what "fill the screen" is
+  // meant to avoid.
+  useEffect(() => {
+    const header = document.querySelector('header');
+    if (!header) return;
+    const update = () => setHeaderHeight(header.getBoundingClientRect().height);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -214,7 +231,11 @@ export default function Board() {
   const boardRows = boardColumns > 0 ? Math.ceil(categoriesWithTiles.length / boardColumns) : 1;
 
   return (
-    <div className="w-full px-4 sm:px-8 py-6 min-h-screen flex flex-col">
+    <div className="w-full px-4 sm:px-8 py-6 flex flex-col" style={{ height: `calc(100dvh - ${headerHeight}px)` }}>
+      <p className="text-center text-base font-semibold text-[var(--color-ink-dim)] mb-4 shrink-0">
+        {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
+      </p>
+
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 min-h-0">
         <div className="lg:w-64 xl:w-72 shrink-0 flex flex-col gap-3">
           <button className="btn btn-danger w-full" onClick={finishGame}>
@@ -223,34 +244,33 @@ export default function Board() {
           {board.teams.map((team, idx) => (
             <div
               key={team.id}
-              className="card p-4 flex flex-col gap-2"
+              className="card p-4 flex flex-col items-center text-center gap-2"
               style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
             >
-              <p className="text-base font-extrabold" style={{ color: team.color }}>
-                {team.name} {idx === activeTeamIndex && <span className="text-xs">🎯 دورهم</span>}
+              <p className="text-xl sm:text-2xl font-extrabold" style={{ color: team.color }}>
+                {team.name}
               </p>
-              <div className="flex items-center gap-2">
-                <p className="text-3xl font-black">{team.score}</p>
-                <div className="flex flex-col gap-0.5">
-                  <button
-                    className="w-6 h-6 rounded-full text-sm font-black flex items-center justify-center leading-none"
-                    style={{ background: `${team.color}33`, color: team.color }}
-                    onClick={() => adjustScore(team.id, 50)}
-                    title="أضف نقاط"
-                  >
-                    +
-                  </button>
-                  <button
-                    className="w-6 h-6 rounded-full text-sm font-black flex items-center justify-center leading-none"
-                    style={{ background: `${team.color}33`, color: team.color }}
-                    onClick={() => adjustScore(team.id, -50)}
-                    title="اخصم نقاط"
-                  >
-                    −
-                  </button>
-                </div>
+              {idx === activeTeamIndex && <span className="text-xs -mt-1">🎯 دورهم</span>}
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  className="w-8 h-8 rounded-full text-lg font-black flex items-center justify-center leading-none"
+                  style={{ background: `${team.color}33`, color: team.color }}
+                  onClick={() => adjustScore(team.id, -50)}
+                  title="اخصم نقاط"
+                >
+                  −
+                </button>
+                <p className="text-4xl sm:text-5xl font-black">{team.score}</p>
+                <button
+                  className="w-8 h-8 rounded-full text-lg font-black flex items-center justify-center leading-none"
+                  style={{ background: `${team.color}33`, color: team.color }}
+                  onClick={() => adjustScore(team.id, 50)}
+                  title="أضف نقاط"
+                >
+                  +
+                </button>
               </div>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex gap-1.5 flex-wrap justify-center">
                 {team.lifelines.map((l) => (
                   <span
                     key={l.id}
@@ -266,10 +286,6 @@ export default function Board() {
         </div>
 
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
-          <p className="text-center text-base font-semibold text-[var(--color-ink-dim)] mb-5">
-            {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
-          </p>
-
           <div
             className="grid gap-3 flex-1 min-h-0"
             style={{
