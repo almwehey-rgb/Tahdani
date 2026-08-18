@@ -19,6 +19,10 @@ function emptyTeam(name: string, color: string): WizardTeam {
   return { name, color, players: [''] };
 }
 
+const TEAM_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
+const TEAM_NAME_DEFAULTS = ['الفريق الأول', 'الفريق الثاني', 'الفريق الثالث', 'الفريق الرابع'];
+const MAX_TEAMS = 4;
+
 export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -32,7 +36,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
 
-  const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({ 0: [], 1: [] });
+  const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
 
   const categoryType = mode === 'KIDS' ? 'KIDS' : undefined;
@@ -53,6 +57,19 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
     setTeams((prev) => prev.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
   }
 
+  function addTeam() {
+    setTeams((prev) => {
+      if (prev.length >= MAX_TEAMS) return prev;
+      return [...prev, emptyTeam(TEAM_NAME_DEFAULTS[prev.length], PALETTE[prev.length % PALETTE.length])];
+    });
+    setLifelines({});
+  }
+
+  function removeTeam(idx: number) {
+    setTeams((prev) => (prev.length > 2 ? prev.filter((_, i) => i !== idx) : prev));
+    setLifelines({});
+  }
+
   function shufflePool() {
     const names = pool.map((n) => n.trim()).filter(Boolean);
     if (names.length < 2) {
@@ -60,11 +77,9 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
       return;
     }
     const shuffled = [...names].sort(() => Math.random() - 0.5);
-    const mid = Math.ceil(shuffled.length / 2);
-    setTeams((prev) => [
-      { ...prev[0], players: shuffled.slice(0, mid) },
-      { ...prev[1], players: shuffled.slice(mid) },
-    ]);
+    setTeams((prev) =>
+      prev.map((t, i) => ({ ...t, players: shuffled.filter((_, ni) => ni % prev.length === i) })),
+    );
     toast.success('تم تقسيم الفرق بنجاح!');
   }
 
@@ -75,7 +90,8 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
       const players = t.players.map((p) => p.trim()).filter(Boolean);
       if (players.length === 0) return 'الرجاء إدخال عدد صحيح من اللاعبين';
     }
-    if (teams[0].name.trim().toLowerCase() === teams[1].name.trim().toLowerCase()) return 'اسم الفريق مكرر، يرجى التغيير';
+    const names = teams.map((t) => t.name.trim().toLowerCase());
+    if (new Set(names).size !== names.length) return 'اسم الفريق مكرر، يرجى التغيير';
     return null;
   }
 
@@ -202,7 +218,14 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
           <div className="grid sm:grid-cols-2 gap-4">
             {teams.map((team, idx) => (
               <div key={idx} className="p-4 rounded-xl bg-[var(--color-bg-soft)] border border-[var(--color-border)]">
-                <label className="label">اسم الفريق {idx === 0 ? 'الأول' : 'الثاني'}</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="label !mb-0">اسم الفريق {TEAM_ORDINALS[idx] || idx + 1}</label>
+                  {teams.length > 2 && (
+                    <button className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-danger)]" onClick={() => removeTeam(idx)}>
+                      ✕ إزالة الفريق
+                    </button>
+                  )}
+                </div>
                 <input className="input mb-3" value={team.name} onChange={(e) => updateTeam(idx, { name: e.target.value })} />
 
                 <label className="label">لون الفريق</label>
@@ -249,6 +272,12 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
             ))}
           </div>
 
+          {teams.length < MAX_TEAMS && (
+            <button className="btn btn-ghost w-full mt-4" onClick={addTeam}>
+              + إضافة فريق
+            </button>
+          )}
+
           <button className="btn btn-primary w-full mt-6" onClick={goCategories} disabled={creating}>
             {creating ? 'جاري الإنشاء...' : 'التالي: اختر الفئات'}
           </button>
@@ -272,22 +301,20 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
               {categories.map((c) => {
                 const selected = selectedCategories.includes(c.id);
                 return (
-                  <button
-                    key={c.id}
-                    onClick={() => toggleCategory(c.id)}
-                    className="rounded-xl overflow-hidden border-2 text-center transition-all"
-                    style={{ borderColor: selected ? c.color : 'var(--color-border)' }}
-                  >
+                  <button key={c.id} onClick={() => toggleCategory(c.id)} className="text-center transition-all">
                     <div
-                      className="relative aspect-[16/10]"
-                      style={{ background: `linear-gradient(160deg, ${c.color}66, ${c.color}22)` }}
+                      className="relative rounded-2xl overflow-hidden aspect-square border-2"
+                      style={{
+                        background: `linear-gradient(160deg, ${c.color}44, ${c.color}18)`,
+                        borderColor: selected ? c.color : `${c.color}33`,
+                      }}
                     >
                       <div className="absolute inset-0 flex items-center justify-center text-4xl">{c.icon}</div>
                       {c.imageUrl && (
                         <img
                           src={c.imageUrl}
                           alt=""
-                          className="absolute inset-0 w-full h-full object-contain p-2"
+                          className="absolute inset-0 w-full h-full object-contain p-3"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
@@ -299,10 +326,8 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                         </div>
                       )}
                     </div>
-                    <div className="py-2 px-2" style={{ background: selected ? `${c.color}22` : 'var(--color-bg-soft)' }}>
-                      <div className="text-sm font-bold">{c.name}</div>
-                      {c.type === 'SEASONAL' && <div className="text-[10px] text-[var(--color-gold)] mt-1">موسمية</div>}
-                    </div>
+                    <div className="text-sm font-bold mt-1.5">{c.name}</div>
+                    {c.type === 'SEASONAL' && <div className="text-[10px] text-[var(--color-gold)] mt-0.5">موسمية</div>}
                   </button>
                 );
               })}

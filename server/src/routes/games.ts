@@ -34,7 +34,7 @@ const teamSchema = z.object({
 
 const createGameSchema = z.object({
   mode: z.enum(['CLASSIC', 'KIDS', 'STUDENT']).default('CLASSIC'),
-  teams: z.array(teamSchema).min(2).max(2),
+  teams: z.array(teamSchema).min(2).max(4),
   categoryIds: z.array(z.string()).min(1).max(8),
 });
 
@@ -202,7 +202,13 @@ router.post('/:id/lifelines/:lifelineId/use', requireAuth, async (req: AuthedReq
         prisma.gameQuestion.findUnique({ where: { id: gameQuestionId }, include: { question: true } }),
         prisma.team.findUnique({ where: { id: lifeline.teamId } }),
       ]);
-      const opponent = team ? await prisma.team.findFirst({ where: { gameId: game.id, id: { not: team.id } } }) : null;
+      // With more than 2 teams there's no single "the opponent" — steal from
+      // whoever currently has the most points, since that's the team with
+      // the most to lose and the most reasonable default without adding a
+      // target-picker UI.
+      const opponent = team
+        ? await prisma.team.findFirst({ where: { gameId: game.id, id: { not: team.id } }, orderBy: { score: 'desc' } })
+        : null;
       if (gq && team && opponent) {
         stolen = Math.min(gq.question.points, opponent.score);
         if (stolen > 0) {

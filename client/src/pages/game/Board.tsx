@@ -21,7 +21,7 @@ export default function Board() {
   const [varOpen, setVarOpen] = useState(false);
   const [varNote, setVarNote] = useState('');
   const [pickedPlayer, setPickedPlayer] = useState<string | null>(null);
-  const [swapTurnForTile, setSwapTurnForTile] = useState(false);
+  const [trapTargetIndex, setTrapTargetIndex] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const phaseRef = useRef<'main' | 'steal'>('main');
 
@@ -85,7 +85,7 @@ export default function Board() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openTile?.gameQuestionId]);
 
-  const activeTeamIndex = swapTurnForTile ? (turn === 0 ? 1 : 0) : turn;
+  const activeTeamIndex = trapTargetIndex ?? turn;
   const activeTeam = board?.teams[activeTeamIndex];
 
   const answeredCount = board?.tiles.filter((t) => t.answeredByTeamId).length ?? 0;
@@ -95,7 +95,7 @@ export default function Board() {
   async function openQuestion(tile: GameTile) {
     if (tile.answeredByTeamId) return;
     setPickedPlayer(null);
-    setSwapTurnForTile(false);
+    setTrapTargetIndex(null);
     setShowAnswer(false);
     if (tile.isOpened && tile.text) {
       setOpenTile(tile);
@@ -131,7 +131,7 @@ export default function Board() {
         setBoard({ ...board, tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: activeTeam!.id, isCorrect: false } : t)) });
       }
       setOpenTile(null);
-      setTurn((t) => (t === 0 ? 1 : 0));
+      setTurn((t) => (t + 1) % board.teams.length);
     } catch (err) {
       toast.error(apiErrorMessage(err));
     }
@@ -149,7 +149,7 @@ export default function Board() {
       // instead of recomputing scores locally.
       setBoard({ ...board, teams: data.teams });
       if (type === 'PHONE_A_FRIEND') setPhoneOverlay(60);
-      if (type === 'TRAP') setSwapTurnForTile(true);
+      if (type === 'TRAP') setTrapTargetIndex((turn + 1) % board.teams.length);
       if (type === 'PICK_ANSWERER') setPickedPlayer(activeTeam.players[Math.floor(Math.random() * activeTeam.players.length)]?.name || null);
       if (type === 'DOUBLE_ANSWER') toast.success('يمكن للفريق تجربة إجابتين لهذا السؤال');
       if (type === 'STEAL_POINTS') {
@@ -271,27 +271,22 @@ export default function Board() {
         {categoriesWithTiles.map(({ category, tiles }) => (
           <div key={category.id} className="flex flex-col gap-2.5">
             <div
-              className="relative rounded-xl overflow-hidden aspect-[16/10]"
-              style={{ background: `linear-gradient(160deg, ${category.color}66, ${category.color}22)` }}
+              className="relative rounded-2xl overflow-hidden aspect-square"
+              style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)`, border: `1px solid ${category.color}55` }}
             >
               <div className="absolute inset-0 flex items-center justify-center text-6xl">{category.icon}</div>
               {category.imageUrl && (
                 <img
                   src={category.imageUrl}
                   alt=""
-                  className="absolute inset-0 w-full h-full object-contain p-3"
+                  className="absolute inset-0 w-full h-full object-contain p-5"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
               )}
-              <div
-                className="absolute bottom-0 inset-x-0 py-2 px-2 text-center font-extrabold text-white text-lg"
-                style={{ background: category.color }}
-              >
-                {category.name}
-              </div>
             </div>
+            <div className="text-center font-extrabold text-lg">{category.name}</div>
             {tiles.map((tile) => (
               <button
                 key={tile.gameQuestionId}
@@ -372,12 +367,11 @@ export default function Board() {
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-2">
-              <button className="btn btn-primary" style={{ background: board.teams[0].color }} onClick={() => markAnswer(board.teams[0].id)}>
-                ✔ {board.teams[0].name} جاوب صح
-              </button>
-              <button className="btn btn-primary" style={{ background: board.teams[1].color }} onClick={() => markAnswer(board.teams[1].id)}>
-                ✔ {board.teams[1].name} جاوب صح
-              </button>
+              {board.teams.map((team) => (
+                <button key={team.id} className="btn btn-primary" style={{ background: team.color }} onClick={() => markAnswer(team.id)}>
+                  ✔ {team.name} جاوب صح
+                </button>
+              ))}
             </div>
             <button className="btn btn-ghost w-full mb-2" onClick={() => markAnswer(null)}>
               لا أحد جاوب / اللي بعده
