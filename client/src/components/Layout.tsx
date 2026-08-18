@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useState } from 'react';
 import Logo from './Logo';
 import { useAuthStore } from '../store/auth';
+import { useGameUiStore } from '../store/gameUi';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
@@ -19,6 +20,7 @@ export default function Layout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const showFooter = !HIDE_FOOTER_PATTERN.test(location.pathname);
+  const finishGameHandler = useGameUiStore((s) => s.finishGameHandler);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -38,6 +40,11 @@ export default function Layout() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {finishGameHandler && (
+              <button className="btn btn-danger !py-2 !px-3 text-sm" onClick={finishGameHandler}>
+                إنهاء اللعبة
+              </button>
+            )}
             {user ? (
               <>
                 <span className="hidden sm:inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-full bg-[var(--color-surface-hi)] text-[var(--color-gold)]">
