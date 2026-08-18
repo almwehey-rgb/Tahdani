@@ -244,25 +244,25 @@ export default function Board() {
           {board.teams.map((team, idx) => (
             <div
               key={team.id}
-              className="card p-4 flex flex-col items-center text-center gap-2"
+              className="card p-4 flex flex-col items-center justify-center text-center gap-3 flex-1"
               style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
             >
-              <p className="text-xl sm:text-2xl font-extrabold" style={{ color: team.color }}>
+              <p className="text-2xl sm:text-3xl font-extrabold" style={{ color: team.color }}>
                 {team.name}
               </p>
-              {idx === activeTeamIndex && <span className="text-xs -mt-1">🎯 دورهم</span>}
-              <div className="flex items-center justify-center gap-3">
+              {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
+              <div className="flex items-center justify-center gap-4">
                 <button
-                  className="w-8 h-8 rounded-full text-lg font-black flex items-center justify-center leading-none"
+                  className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
                   style={{ background: `${team.color}33`, color: team.color }}
                   onClick={() => adjustScore(team.id, -50)}
                   title="اخصم نقاط"
                 >
                   −
                 </button>
-                <p className="text-4xl sm:text-5xl font-black">{team.score}</p>
+                <p className="text-5xl sm:text-6xl font-black">{team.score}</p>
                 <button
-                  className="w-8 h-8 rounded-full text-lg font-black flex items-center justify-center leading-none"
+                  className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
                   style={{ background: `${team.color}33`, color: team.color }}
                   onClick={() => adjustScore(team.id, 50)}
                   title="أضف نقاط"
@@ -270,12 +270,12 @@ export default function Board() {
                   +
                 </button>
               </div>
-              <div className="flex gap-1.5 flex-wrap justify-center">
+              <div className="flex gap-2.5 flex-wrap justify-center">
                 {team.lifelines.map((l) => (
                   <span
                     key={l.id}
                     title={LIFELINE_LABELS[l.type].label}
-                    className={`text-xl ${l.used ? 'opacity-25 grayscale' : ''}`}
+                    className={`text-2xl sm:text-3xl ${l.used ? 'opacity-25 grayscale' : ''}`}
                   >
                     {LIFELINE_LABELS[l.type].icon}
                   </span>

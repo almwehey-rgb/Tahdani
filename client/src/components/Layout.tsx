@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import Logo from './Logo';
 import { useAuthStore } from '../store/auth';
@@ -8,10 +8,17 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'bg-[var(--color-surface-hi)] text-white' : 'text-[var(--color-ink-dim)] hover:text-white'
   }`;
 
+// The game board sizes itself to exactly fill the viewport below the
+// header (see Board.tsx) so the whole thing is visible without scrolling —
+// a footer strip here would just eat into that space for no reason.
+const HIDE_FOOTER_PATTERN = /^\/game\/[^/]+\/board$/;
+
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const showFooter = !HIDE_FOOTER_PATTERN.test(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -78,9 +85,11 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-[var(--color-border)] py-6 text-center text-sm text-[var(--color-ink-faint)]">
-        تحدّني © {new Date().getFullYear()} — لعبة أسئلة وتحديات جماعية
-      </footer>
+      {showFooter && (
+        <footer className="border-t border-[var(--color-border)] py-6 text-center text-sm text-[var(--color-ink-faint)]">
+          تحدّني © {new Date().getFullYear()} — لعبة أسئلة وتحديات جماعية
+        </footer>
+      )}
     </div>
   );
 }
