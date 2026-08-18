@@ -271,13 +271,16 @@ export default function Board() {
         {categoriesWithTiles.map(({ category, tiles }) => {
           const leftTiles = tiles.filter((_, i) => i % 2 === 0);
           const rightTiles = tiles.filter((_, i) => i % 2 === 1);
-          const renderTile = (tile: GameTile) => (
+          const renderTile = (tile: GameTile, isLast: boolean) => (
             <button
               key={tile.gameQuestionId}
               disabled={!!tile.answeredByTeamId}
               onClick={() => openQuestion(tile)}
-              className="card flex-1 min-w-0 py-2.5 px-1 font-extrabold text-base sm:text-lg whitespace-nowrap transition-transform hover:scale-[1.03] disabled:hover:scale-100 relative"
+              className={`flex-1 min-w-0 py-3 px-1 font-extrabold text-base sm:text-lg whitespace-nowrap transition-colors hover:bg-white/5 disabled:hover:bg-transparent relative ${
+                isLast ? '' : 'border-b'
+              }`}
               style={{
+                borderColor: 'var(--color-border)',
                 opacity: tile.answeredByTeamId ? 0.35 : 1,
                 background: tile.answeredByTeamId
                   ? board.teams.find((t) => t.id === tile.answeredByTeamId)?.color + '22'
@@ -290,12 +293,14 @@ export default function Board() {
             </button>
           );
           return (
-            <div key={category.id} className="flex flex-col gap-2.5 min-w-0">
-              <div className="flex gap-1.5 items-stretch">
-                <div className="flex flex-col gap-1.5 flex-1 min-w-0">{leftTiles.map(renderTile)}</div>
+            <div key={category.id} className="rounded-2xl overflow-hidden min-w-0" style={{ border: `1px solid ${category.color}55` }}>
+              <div className="flex items-stretch" style={{ background: 'var(--color-bg-soft)' }}>
+                <div className="flex flex-col flex-1 min-w-0">
+                  {leftTiles.map((tile, i) => renderTile(tile, i === leftTiles.length - 1))}
+                </div>
                 <div
-                  className="relative rounded-2xl overflow-hidden w-12 sm:w-20 shrink-0"
-                  style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)`, border: `1px solid ${category.color}55` }}
+                  className="relative w-14 sm:w-24 shrink-0"
+                  style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)` }}
                 >
                   <div className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">{category.icon}</div>
                   {category.imageUrl && (
@@ -309,9 +314,16 @@ export default function Board() {
                     />
                   )}
                 </div>
-                <div className="flex flex-col gap-1.5 flex-1 min-w-0">{rightTiles.map(renderTile)}</div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  {rightTiles.map((tile, i) => renderTile(tile, i === rightTiles.length - 1))}
+                </div>
               </div>
-              <div className="text-center font-extrabold text-sm sm:text-lg truncate">{category.name}</div>
+              <div
+                className="text-center font-extrabold text-xs sm:text-sm py-1.5 px-1 truncate text-white"
+                style={{ background: category.color }}
+              >
+                {category.name}
+              </div>
             </div>
           );
         })}
