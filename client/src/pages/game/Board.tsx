@@ -210,8 +210,11 @@ export default function Board() {
     tiles: board.tiles.filter((t) => t.categoryId === cat.id).sort((a, b) => a.points - b.points),
   }));
 
+  const boardColumns = Math.min(categoriesWithTiles.length, 3);
+  const boardRows = boardColumns > 0 ? Math.ceil(categoriesWithTiles.length / boardColumns) : 1;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 min-h-screen flex flex-col">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         {board.teams.map((team, idx) => (
           <div
@@ -267,7 +270,13 @@ export default function Board() {
         {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
       </p>
 
-      <div className="grid gap-x-3 gap-y-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+      <div
+        className="grid gap-3 flex-1 min-h-0"
+        style={{
+          gridTemplateColumns: `repeat(${boardColumns}, minmax(0,1fr))`,
+          gridTemplateRows: `repeat(${boardRows}, minmax(0,1fr))`,
+        }}
+      >
         {categoriesWithTiles.map(({ category, tiles }) => {
           const leftTiles = tiles.filter((_, i) => i % 2 === 0);
           const rightTiles = tiles.filter((_, i) => i % 2 === 1);
@@ -276,7 +285,7 @@ export default function Board() {
               key={tile.gameQuestionId}
               disabled={!!tile.answeredByTeamId}
               onClick={() => openQuestion(tile)}
-              className={`flex-1 min-w-0 py-3 px-1 font-extrabold text-base sm:text-lg whitespace-nowrap transition-colors hover:bg-white/5 disabled:hover:bg-transparent relative ${
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-white/5 disabled:hover:bg-transparent relative ${
                 isLast ? '' : 'border-b'
               }`}
               style={{
@@ -293,21 +302,25 @@ export default function Board() {
             </button>
           );
           return (
-            <div key={category.id} className="rounded-2xl overflow-hidden min-w-0" style={{ border: `1px solid ${category.color}55` }}>
-              <div className="flex items-stretch" style={{ background: 'var(--color-bg-soft)' }}>
+            <div
+              key={category.id}
+              className="rounded-2xl overflow-hidden min-w-0 h-full flex flex-col"
+              style={{ border: `1px solid ${category.color}55` }}
+            >
+              <div className="flex items-stretch flex-1 min-h-0" style={{ background: 'var(--color-bg-soft)' }}>
                 <div className="flex flex-col flex-1 min-w-0">
                   {leftTiles.map((tile, i) => renderTile(tile, i === leftTiles.length - 1))}
                 </div>
                 <div
-                  className="relative w-14 sm:w-24 shrink-0"
+                  className="relative w-9 sm:w-24 md:w-40 shrink-0"
                   style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)` }}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">{category.icon}</div>
+                  <div className="absolute inset-0 flex items-center justify-center text-lg sm:text-4xl md:text-6xl">{category.icon}</div>
                   {category.imageUrl && (
                     <img
                       src={category.imageUrl}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-contain p-1.5"
+                      className="absolute inset-0 w-full h-full object-contain p-1 sm:p-2"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -319,7 +332,7 @@ export default function Board() {
                 </div>
               </div>
               <div
-                className="text-center font-extrabold text-xs sm:text-sm py-1.5 px-1 truncate text-white"
+                className="text-center font-extrabold text-[10px] sm:text-lg md:text-xl py-1.5 sm:py-2 px-1 truncate text-white shrink-0"
                 style={{ background: category.color }}
               >
                 {category.name}
