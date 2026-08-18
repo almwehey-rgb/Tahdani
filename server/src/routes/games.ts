@@ -5,7 +5,7 @@ import { requireAuth, AuthedRequest } from '../middleware/auth';
 
 const router = Router();
 
-const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER', 'STEAL_POINTS'] as const;
+const LIFELINE_TYPES = ['PHONE_A_FRIEND', 'DOUBLE_ANSWER', 'MORE_HINT', 'TRAP', 'PICK_ANSWERER', 'STEAL_POINTS', 'DOUBLE_POINTS'] as const;
 
 const TILES_PER_TIER = 2;
 

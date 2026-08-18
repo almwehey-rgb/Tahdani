@@ -23,6 +23,7 @@ export default function Board() {
   const [varNote, setVarNote] = useState('');
   const [pickedPlayer, setPickedPlayer] = useState<string | null>(null);
   const [trapTargetIndex, setTrapTargetIndex] = useState<number | null>(null);
+  const [doublePointsActive, setDoublePointsActive] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(72);
   const setFinishGameHandler = useGameUiStore((s) => s.setFinishGameHandler);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -121,6 +122,7 @@ export default function Board() {
     if (tile.answeredByTeamId) return;
     setPickedPlayer(null);
     setTrapTargetIndex(null);
+    setDoublePointsActive(false);
     setShowAnswer(false);
     if (tile.isOpened && tile.text) {
       setOpenTile(tile);
@@ -146,6 +148,18 @@ export default function Board() {
         // teams without players/lifelines silently wiped both everywhere
         // they're read, crashing the whole page on the next render).
         const scoreByTeamId = new Map<string, number>(data.teams.map((t: { id: string; score: number }) => [t.id, t.score]));
+        if (doublePointsActive) {
+          // Awarded as a second adjust-score on top of the normal points
+          // the /answer call above already gave — reusing that endpoint
+          // instead of teaching the server a new "double" concept.
+          try {
+            const { data: bonus } = await api.post(`/games/${id}/teams/${teamId}/adjust-score`, { delta: openTile.points });
+            scoreByTeamId.set(teamId, bonus.team.score);
+            toast.success(`ضاعفت النقاط! +${openTile.points} إضافية 2️⃣`);
+          } catch (err) {
+            toast.error(apiErrorMessage(err));
+          }
+        }
         setBoard({
           ...board,
           teams: board.teams.map((t) => (scoreByTeamId.has(t.id) ? { ...t, score: scoreByTeamId.get(t.id)! } : t)),
@@ -156,6 +170,7 @@ export default function Board() {
         setBoard({ ...board, tiles: board.tiles.map((t) => (t.gameQuestionId === openTile.gameQuestionId ? { ...t, answeredByTeamId: activeTeam!.id, isCorrect: false } : t)) });
       }
       setOpenTile(null);
+      setDoublePointsActive(false);
       setTurn((t) => (t + 1) % board.teams.length);
     } catch (err) {
       toast.error(apiErrorMessage(err));
@@ -180,6 +195,10 @@ export default function Board() {
       if (type === 'STEAL_POINTS') {
         if (data.stolen > 0) toast.success(`سرقت ${data.stolen} نقطة من الفريق المنافس! 💰`);
         else toast('الفريق المنافس ما عنده نقاط تُسرق حاليا', { icon: '😅' });
+      }
+      if (type === 'DOUBLE_POINTS') {
+        setDoublePointsActive(true);
+        toast.success('راح تتضاعف نقاط هذا السؤال لو جاوبتوا صح! 2️⃣');
       }
     } catch (err) {
       toast.error(apiErrorMessage(err));
@@ -210,10 +229,18 @@ export default function Board() {
 
   async function adjustScore(teamId: string, delta: number) {
     if (!board) return;
+    const team = board.teams.find((t) => t.id === teamId);
+    if (!team) return;
+    const previousScore = team.score;
+    // Apply the change locally right away — waiting on the round trip made
+    // every click feel laggy even though the request itself was fast.
+    // Falls back to a revert + toast if the server ends up disagreeing.
+    setBoard({ ...board, teams: board.teams.map((t) => (t.id === teamId ? { ...t, score: Math.max(0, previousScore + delta) } : t)) });
     try {
       const { data } = await api.post(`/games/${id}/teams/${teamId}/adjust-score`, { delta });
-      setBoard({ ...board, teams: board.teams.map((t) => (t.id === teamId ? { ...t, score: data.team.score } : t)) });
+      setBoard((prev) => (prev ? { ...prev, teams: prev.teams.map((t) => (t.id === teamId ? { ...t, score: data.team.score } : t)) } : prev));
     } catch (err) {
+      setBoard((prev) => (prev ? { ...prev, teams: prev.teams.map((t) => (t.id === teamId ? { ...t, score: previousScore } : t)) } : prev));
       toast.error(apiErrorMessage(err));
     }
   }
@@ -256,7 +283,7 @@ export default function Board() {
                 {team.name}
               </p>
               {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-3">
                 <button
                   className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
                   style={{ background: `${team.color}33`, color: team.color }}
@@ -371,6 +398,7 @@ export default function Board() {
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold" style={{ color: activeTeam.color }}>
                 دور فريق: {activeTeam.name} {pickedPlayer && `— يجيب: ${pickedPlayer}`}
+                {doublePointsActive && <span className="text-[var(--color-gold)]"> — نقاط مضاعفة 2️⃣</span>}
               </span>
               <span className={`font-black text-lg ${timeLeft <= 5 ? 'text-[var(--color-danger)] animate-pulse-ring rounded-full px-2' : ''}`}>
                 {phase === 'main' ? '⏱️' : '⏳'} {timeLeft}ث
