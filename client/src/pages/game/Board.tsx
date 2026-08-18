@@ -240,9 +240,17 @@ export default function Board() {
       <div className="grid gap-x-6 gap-y-5" style={{ gridTemplateColumns: `repeat(${Math.min(categoriesWithTiles.length, 3)}, minmax(0,1fr))` }}>
         {categoriesWithTiles.map(({ category, tiles }) => (
           <div key={category.id} className="flex flex-col gap-2.5">
-            <div className="text-center py-3 px-2 rounded-xl font-extrabold" style={{ background: `${category.color}33`, color: category.color }}>
-              <div className="text-3xl leading-none mb-1">{category.icon}</div>
-              <div className="text-lg">{category.name}</div>
+            <div
+              className="relative rounded-xl overflow-hidden aspect-[16/10]"
+              style={{ background: `linear-gradient(160deg, ${category.color}66, ${category.color}22)` }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center text-6xl">{category.icon}</div>
+              <div
+                className="absolute bottom-0 inset-x-0 py-2 px-2 text-center font-extrabold text-white text-lg"
+                style={{ background: category.color }}
+              >
+                {category.name}
+              </div>
             </div>
             {tiles.map((tile) => (
               <button
