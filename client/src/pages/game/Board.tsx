@@ -214,17 +214,20 @@ export default function Board() {
   const boardRows = boardColumns > 0 ? Math.ceil(categoriesWithTiles.length / boardColumns) : 1;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 min-h-screen flex flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        {board.teams.map((team, idx) => (
-          <div
-            key={team.id}
-            className="flex-1 min-w-[240px] card p-5 flex items-center justify-between"
-            style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
-          >
-            <div>
-              <p className="text-lg font-extrabold" style={{ color: team.color }}>
-                {team.name} {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
+    <div className="w-full px-4 sm:px-8 py-6 min-h-screen flex flex-col">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 min-h-0">
+        <div className="lg:w-64 xl:w-72 shrink-0 flex flex-col gap-3">
+          <button className="btn btn-danger w-full" onClick={finishGame}>
+            إنهاء اللعبة
+          </button>
+          {board.teams.map((team, idx) => (
+            <div
+              key={team.id}
+              className="card p-4 flex flex-col gap-2"
+              style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
+            >
+              <p className="text-base font-extrabold" style={{ color: team.color }}>
+                {team.name} {idx === activeTeamIndex && <span className="text-xs">🎯 دورهم</span>}
               </p>
               <div className="flex items-center gap-2">
                 <p className="text-3xl font-black">{team.score}</p>
@@ -247,37 +250,34 @@ export default function Board() {
                   </button>
                 </div>
               </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {team.lifelines.map((l) => (
+                  <span
+                    key={l.id}
+                    title={LIFELINE_LABELS[l.type].label}
+                    className={`text-xl ${l.used ? 'opacity-25 grayscale' : ''}`}
+                  >
+                    {LIFELINE_LABELS[l.type].icon}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-1.5">
-              {team.lifelines.map((l) => (
-                <span
-                  key={l.id}
-                  title={LIFELINE_LABELS[l.type].label}
-                  className={`text-xl ${l.used ? 'opacity-25 grayscale' : ''}`}
-                >
-                  {LIFELINE_LABELS[l.type].icon}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-        <button className="btn btn-danger" onClick={finishGame}>
-          إنهاء اللعبة
-        </button>
-      </div>
+          ))}
+        </div>
 
-      <p className="text-center text-base font-semibold text-[var(--color-ink-dim)] mb-5">
-        {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
-      </p>
+        <div className="flex-1 min-w-0 flex flex-col min-h-0">
+          <p className="text-center text-base font-semibold text-[var(--color-ink-dim)] mb-5">
+            {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
+          </p>
 
-      <div
-        className="grid gap-3 flex-1 min-h-0"
-        style={{
-          gridTemplateColumns: `repeat(${boardColumns}, minmax(0,1fr))`,
-          gridTemplateRows: `repeat(${boardRows}, minmax(0,1fr))`,
-        }}
-      >
-        {categoriesWithTiles.map(({ category, tiles }) => {
+          <div
+            className="grid gap-3 flex-1 min-h-0"
+            style={{
+              gridTemplateColumns: `repeat(${boardColumns}, minmax(0,1fr))`,
+              gridTemplateRows: `repeat(${boardRows}, minmax(0,1fr))`,
+            }}
+          >
+            {categoriesWithTiles.map(({ category, tiles }) => {
           const leftTiles = tiles.filter((_, i) => i % 2 === 0);
           const rightTiles = tiles.filter((_, i) => i % 2 === 1);
           const renderTile = (tile: GameTile, isLast: boolean) => (
@@ -339,7 +339,9 @@ export default function Board() {
               </div>
             </div>
           );
-        })}
+            })}
+          </div>
+        </div>
       </div>
 
       {openTile && activeTeam && (
