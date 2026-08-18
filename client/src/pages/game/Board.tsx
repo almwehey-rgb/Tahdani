@@ -267,46 +267,54 @@ export default function Board() {
         {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
       </p>
 
-      <div className="grid gap-x-6 gap-y-5" style={{ gridTemplateColumns: `repeat(${Math.min(categoriesWithTiles.length, 3)}, minmax(0,1fr))` }}>
-        {categoriesWithTiles.map(({ category, tiles }) => (
-          <div key={category.id} className="flex flex-col gap-2.5">
-            <div
-              className="relative rounded-2xl overflow-hidden aspect-square"
-              style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)`, border: `1px solid ${category.color}55` }}
+      <div className="grid gap-x-3 gap-y-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+        {categoriesWithTiles.map(({ category, tiles }) => {
+          const leftTiles = tiles.filter((_, i) => i % 2 === 0);
+          const rightTiles = tiles.filter((_, i) => i % 2 === 1);
+          const renderTile = (tile: GameTile) => (
+            <button
+              key={tile.gameQuestionId}
+              disabled={!!tile.answeredByTeamId}
+              onClick={() => openQuestion(tile)}
+              className="card flex-1 min-w-0 py-2.5 px-1 font-extrabold text-base sm:text-lg whitespace-nowrap transition-transform hover:scale-[1.03] disabled:hover:scale-100 relative"
+              style={{
+                opacity: tile.answeredByTeamId ? 0.35 : 1,
+                background: tile.answeredByTeamId
+                  ? board.teams.find((t) => t.id === tile.answeredByTeamId)?.color + '22'
+                  : undefined,
+              }}
             >
-              <div className="absolute inset-0 flex items-center justify-center text-6xl">{category.icon}</div>
-              {category.imageUrl && (
-                <img
-                  src={category.imageUrl}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-contain p-5"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
+              {tile.isDrawing && '🎨 '}
+              {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.points}
+              {tile.usedVar && <span className="absolute top-1 left-1 text-xs">🚩</span>}
+            </button>
+          );
+          return (
+            <div key={category.id} className="flex flex-col gap-2.5 min-w-0">
+              <div className="flex gap-1.5 items-stretch">
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">{leftTiles.map(renderTile)}</div>
+                <div
+                  className="relative rounded-2xl overflow-hidden w-12 sm:w-20 shrink-0"
+                  style={{ background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)`, border: `1px solid ${category.color}55` }}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">{category.icon}</div>
+                  {category.imageUrl && (
+                    <img
+                      src={category.imageUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-contain p-1.5"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">{rightTiles.map(renderTile)}</div>
+              </div>
+              <div className="text-center font-extrabold text-sm sm:text-lg truncate">{category.name}</div>
             </div>
-            <div className="text-center font-extrabold text-lg">{category.name}</div>
-            {tiles.map((tile) => (
-              <button
-                key={tile.gameQuestionId}
-                disabled={!!tile.answeredByTeamId}
-                onClick={() => openQuestion(tile)}
-                className="card py-5 font-extrabold text-2xl transition-transform hover:scale-[1.03] disabled:hover:scale-100 relative"
-                style={{
-                  opacity: tile.answeredByTeamId ? 0.35 : 1,
-                  background: tile.answeredByTeamId
-                    ? board.teams.find((t) => t.id === tile.answeredByTeamId)?.color + '22'
-                    : undefined,
-                }}
-              >
-                {tile.isDrawing && '🎨 '}
-                {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.points}
-                {tile.usedVar && <span className="absolute top-1 left-1 text-xs">🚩</span>}
-              </button>
-            ))}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {openTile && activeTeam && (
