@@ -63,11 +63,12 @@ async function main() {
 
   // ---------- Categories & questions ----------
   type Q = { text: string; answer: string; points: number; hint?: string; imageUrl?: string };
-  const categoryDefs: { name: string; icon: string; color: string; type?: string; seasonTag?: string; questions: Q[] }[] = [
+  const categoryDefs: { name: string; icon: string; color: string; imageUrl?: string; type?: string; seasonTag?: string; questions: Q[] }[] = [
     {
       name: 'رياضة',
       icon: '⚽',
       color: '#2FBF71',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Football_in_Bloomington%2C_Indiana%2C_1995.jpg/330px-Football_in_Bloomington%2C_Indiana%2C_1995.jpg',
       questions: [
         { text: 'كم عدد لاعبي الفريق الواحد في كرة القدم داخل الملعب؟', answer: '11 لاعبا', points: 100 },
         { text: 'في أي دولة أقيمت كأس العالم 2022؟', answer: 'قطر', points: 200 },
@@ -78,6 +79,7 @@ async function main() {
       name: 'سينما وأفلام',
       icon: '🎬',
       color: '#E0526C',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Main_Cast_%28206644687%29.jpeg/330px-Main_Cast_%28206644687%29.jpeg',
       questions: [
         { text: 'ما اسم الفيلم الذي يدور حول سفينة غارقة عام 1912؟', answer: 'تايتانيك', points: 100 },
         { text: 'من مخرج سلسلة أفلام "The Dark Knight"؟', answer: 'كريستوفر نولان', points: 200 },
@@ -88,6 +90,7 @@ async function main() {
       name: 'تاريخ',
       icon: '📜',
       color: '#C98A2E',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Denis_Bourez_-_British_Museum%2C_London_%288747049029%29_%282%29.jpg/330px-Denis_Bourez_-_British_Museum%2C_London_%288747049029%29_%282%29.jpg',
       questions: [
         { text: 'في أي عام سقطت الدولة الأموية؟', answer: '750 ميلادي', points: 100 },
         { text: 'من هو أول خليفة راشدي؟', answer: 'أبو بكر الصديق رضي الله عنه', points: 200 },
@@ -98,6 +101,7 @@ async function main() {
       name: 'جغرافيا',
       icon: '🌍',
       color: '#2E8FC9',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/The_Great_Globe%2C_Guyot_Hall%2C_Princeton_University.jpg/330px-The_Great_Globe%2C_Guyot_Hall%2C_Princeton_University.jpg',
       questions: [
         { text: 'ما أطول نهر في العالم؟', answer: 'نهر النيل', points: 100 },
         { text: 'ما عاصمة أستراليا؟', answer: 'كانبيرا', points: 200, hint: 'ليست سيدني!' },
@@ -108,6 +112,7 @@ async function main() {
       name: 'علوم',
       icon: '🔬',
       color: '#5C7CE0',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Carina_Nebula.jpg/330px-Carina_Nebula.jpg',
       questions: [
         { text: 'ما الغاز الذي يشكل الجزء الأكبر من الغلاف الجوي للأرض؟', answer: 'النيتروجين', points: 100 },
         { text: 'كم عدد عظام جسم الإنسان البالغ؟', answer: '206 عظمة', points: 200 },
@@ -118,6 +123,7 @@ async function main() {
       name: 'فن وموسيقى',
       icon: '🎨',
       color: '#B15CE0',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Steinway_Vienna_002.JPG/330px-Steinway_Vienna_002.JPG',
       questions: [
         { text: 'من رسم لوحة "الموناليزا"؟', answer: 'ليوناردو دافنشي', points: 100 },
         { text: 'كم عدد أوتار آلة العود عادة؟', answer: '5 أو 6 أوتار', points: 200 },
@@ -128,6 +134,7 @@ async function main() {
       name: 'أدب وثقافة',
       icon: '📚',
       color: '#D9A441',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/SanDiegoCityCollegeLearningResource_-_bookshelf.jpg/330px-SanDiegoCityCollegeLearningResource_-_bookshelf.jpg',
       questions: [
         { text: 'من مؤلف رواية "مدن الملح"؟', answer: 'عبدالرحمن منيف', points: 100 },
         { text: 'من كاتب "ألف ليلة وليلة" الشهيرة (سرد شعبي وليس مؤلفا واحدا) — من الشخصية الراوية للحكايات؟', answer: 'شهرزاد', points: 200 },
@@ -138,6 +145,7 @@ async function main() {
       name: 'تكنولوجيا',
       icon: '💻',
       color: '#3FC6C6',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/HONDA_ASIMO.jpg/330px-HONDA_ASIMO.jpg',
       questions: [
         { text: 'ما اختصار "AI" في مجال التقنية؟', answer: 'الذكاء الاصطناعي', points: 100 },
         { text: 'من مؤسس شركة مايكروسوفت؟', answer: 'بيل غيتس', points: 200 },
@@ -148,6 +156,7 @@ async function main() {
       name: 'معلومات عامة',
       icon: '💡',
       color: '#E0C23F',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Set_of_various_puzzles.jpg/330px-Set_of_various_puzzles.jpg',
       questions: [
         { text: 'كم عدد أيام السنة الكبيسة؟', answer: '366 يوما', points: 100 },
         { text: 'ما هي العملة الرسمية لليابان؟', answer: 'الين الياباني', points: 200 },
@@ -158,6 +167,7 @@ async function main() {
       name: 'تراث خليجي',
       icon: '🏺',
       color: '#C9622E',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Dhow_znz.jpg/330px-Dhow_znz.jpg',
       questions: [
         { text: 'ما اسم القارب التقليدي المستخدم في الغوص على اللؤلؤ؟', answer: 'السفينة / السنبوك', points: 100 },
         { text: 'ما اسم اللعبة الشعبية الخليجية التي تستخدم فيها أصداف صغيرة؟', answer: 'الطاب / الحويسات (حسب المنطقة)', points: 200 },
@@ -169,6 +179,7 @@ async function main() {
       icon: '✏️',
       color: '#E0526C',
       type: 'DRAWING',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Colouring_pencils.jpg/330px-Colouring_pencils.jpg',
       questions: [
         { text: 'ارسم الكلمة واجعل فريقك يخمنها خلال الوقت المحدد', answer: 'أسد', points: 100 },
         { text: 'ارسم الكلمة واجعل فريقك يخمنها خلال الوقت المحدد', answer: 'طائرة', points: 200 },
@@ -179,6 +190,7 @@ async function main() {
       name: 'أعلام الدول',
       icon: '🚩',
       color: '#2E8FC9',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/United_Nations_Flags_-_cropped.jpg/330px-United_Nations_Flags_-_cropped.jpg',
       questions: (
         [
           // [countryCode, country name in Arabic]
@@ -239,6 +251,7 @@ async function main() {
       name: 'عالم الحيوان',
       icon: '🦁',
       color: '#5C8A3A',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg/330px-020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg',
       questions: [
         { text: 'ما هو الحيوان الملقب بملك الغابة؟', answer: 'الأسد', points: 100 },
         { text: 'ما أطول حيوان في العالم؟', answer: 'الزرافة', points: 100 },
@@ -282,6 +295,7 @@ async function main() {
       name: 'سيرة ذاتية',
       icon: '👤',
       color: '#D9534F',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/WALDST3.jpg/330px-WALDST3.jpg',
       questions: [
         { text: 'عالم ألماني اشتهر بنظرية النسبية، من هو؟', answer: 'ألبرت أينشتاين', points: 100 },
         { text: 'رسام إيطالي رسم لوحة الموناليزا، من هو؟', answer: 'ليوناردو دافنشي', points: 100 },
@@ -325,6 +339,7 @@ async function main() {
       name: 'عالم الشعر',
       icon: '🖋️',
       color: '#4C6FE0',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Fountain_pen_writing_%28literacy%29.jpg/330px-Fountain_pen_writing_%28literacy%29.jpg',
       questions: [
         { text: 'من الشاعر الجاهلي صاحب المعلقة المشهورة، الملقب بـ"الملك الضليل"؟', answer: 'امرؤ القيس', points: 100 },
         { text: 'من الشاعر المصري الملقب بـ"أمير الشعراء"؟', answer: 'أحمد شوقي', points: 100 },
@@ -370,8 +385,11 @@ async function main() {
     let category = await prisma.category.findFirst({ where: { name: c.name } });
     if (!category) {
       category = await prisma.category.create({
-        data: { name: c.name, icon: c.icon, color: c.color, type: c.type || 'PERMANENT' },
+        data: { name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl, type: c.type || 'PERMANENT' },
       });
+    } else if (c.imageUrl && category.imageUrl !== c.imageUrl) {
+      // Backfills the cover image on categories seeded before imageUrl existed.
+      category = await prisma.category.update({ where: { id: category.id }, data: { imageUrl: c.imageUrl } });
     }
     for (const q of [...c.questions, ...extrasFor(c.name)]) {
       // Drawing questions all share the same instruction text (only the
@@ -396,11 +414,14 @@ async function main() {
   }
 
   // Seasonal Ramadan category
+  const ramadanImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Breaking_the_Fast_%282%29_%2827351979537%29.jpg/330px-Breaking_the_Fast_%282%29_%2827351979537%29.jpg';
   let ramadan = await prisma.category.findFirst({ where: { name: 'رمضانيات' } });
   if (!ramadan) {
     ramadan = await prisma.category.create({
-      data: { name: 'رمضانيات', icon: '🌙', color: '#6C4CE0', type: 'SEASONAL', seasonTag: 'RAMADAN_2026' },
+      data: { name: 'رمضانيات', icon: '🌙', color: '#6C4CE0', imageUrl: ramadanImageUrl, type: 'SEASONAL', seasonTag: 'RAMADAN_2026' },
     });
+  } else if (ramadan.imageUrl !== ramadanImageUrl) {
+    ramadan = await prisma.category.update({ where: { id: ramadan.id }, data: { imageUrl: ramadanImageUrl } });
   }
   const ramadanQuestions: Q[] = [
     { text: 'ما هو اسم الوجبة التي يتناولها الصائم قبل الفجر؟', answer: 'السحور', points: 100 },
@@ -413,11 +434,14 @@ async function main() {
   }
 
   // Kids category
+  const kidsImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/ToyCars.jpg/330px-ToyCars.jpg';
   let kids = await prisma.category.findFirst({ where: { name: 'عالم الأطفال' } });
   if (!kids) {
     kids = await prisma.category.create({
-      data: { name: 'عالم الأطفال', icon: '🧸', color: '#3FC6FF', type: 'KIDS' },
+      data: { name: 'عالم الأطفال', icon: '🧸', color: '#3FC6FF', imageUrl: kidsImageUrl, type: 'KIDS' },
     });
+  } else if (kids.imageUrl !== kidsImageUrl) {
+    kids = await prisma.category.update({ where: { id: kids.id }, data: { imageUrl: kidsImageUrl } });
   }
   const kidsQuestions: Q[] = [
     { text: 'كم عدد أيام الأسبوع؟', answer: '7 أيام', points: 100 },

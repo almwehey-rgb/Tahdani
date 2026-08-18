@@ -275,15 +275,28 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                   <button
                     key={c.id}
                     onClick={() => toggleCategory(c.id)}
-                    className="p-4 rounded-xl border-2 text-center transition-all"
-                    style={{
-                      borderColor: selected ? c.color : 'var(--color-border)',
-                      background: selected ? `${c.color}22` : 'var(--color-bg-soft)',
-                    }}
+                    className="rounded-xl overflow-hidden border-2 text-center transition-all"
+                    style={{ borderColor: selected ? c.color : 'var(--color-border)' }}
                   >
-                    <div className="text-2xl mb-1">{c.icon}</div>
-                    <div className="text-sm font-bold">{c.name}</div>
-                    {c.type === 'SEASONAL' && <div className="text-[10px] text-[var(--color-gold)] mt-1">موسمية</div>}
+                    <div
+                      className="relative aspect-[16/10]"
+                      style={{ background: `linear-gradient(160deg, ${c.color}66, ${c.color}22)` }}
+                    >
+                      {c.imageUrl ? (
+                        <img src={c.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-4xl">{c.icon}</div>
+                      )}
+                      {selected && (
+                        <div className="absolute inset-0 flex items-center justify-center text-3xl" style={{ background: `${c.color}55` }}>
+                          ✔
+                        </div>
+                      )}
+                    </div>
+                    <div className="py-2 px-2" style={{ background: selected ? `${c.color}22` : 'var(--color-bg-soft)' }}>
+                      <div className="text-sm font-bold">{c.name}</div>
+                      {c.type === 'SEASONAL' && <div className="text-[10px] text-[var(--color-gold)] mt-1">موسمية</div>}
+                    </div>
                   </button>
                 );
               })}

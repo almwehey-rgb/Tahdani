@@ -11,6 +11,7 @@ export interface Category {
   name: string;
   icon: string;
   color: string;
+  imageUrl?: string | null;
   type: 'PERMANENT' | 'SEASONAL' | 'KIDS' | 'DRAWING' | 'STUDENT';
   seasonTag?: string | null;
   active: boolean;
