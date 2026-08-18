@@ -202,25 +202,25 @@ export default function Board() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         {board.teams.map((team, idx) => (
           <div
             key={team.id}
-            className="flex-1 min-w-[220px] card p-4 flex items-center justify-between"
+            className="flex-1 min-w-[240px] card p-5 flex items-center justify-between"
             style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
           >
             <div>
-              <p className="font-extrabold" style={{ color: team.color }}>
-                {team.name} {idx === activeTeamIndex && <span className="text-xs">🎯 دورهم</span>}
+              <p className="text-lg font-extrabold" style={{ color: team.color }}>
+                {team.name} {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
               </p>
-              <p className="text-2xl font-black">{team.score}</p>
+              <p className="text-3xl font-black">{team.score}</p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {team.lifelines.map((l) => (
                 <span
                   key={l.id}
                   title={LIFELINE_LABELS[l.type].label}
-                  className={`text-lg ${l.used ? 'opacity-25 grayscale' : ''}`}
+                  className={`text-xl ${l.used ? 'opacity-25 grayscale' : ''}`}
                 >
                   {LIFELINE_LABELS[l.type].icon}
                 </span>
@@ -233,22 +233,23 @@ export default function Board() {
         </button>
       </div>
 
-      <p className="text-center text-sm text-[var(--color-ink-dim)] mb-4">
+      <p className="text-center text-base font-semibold text-[var(--color-ink-dim)] mb-5">
         {answeredCount} / {totalTiles} أسئلة {allAnswered && totalTiles > 0 && '— اكتملت جميع الأسئلة! 🎉'}
       </p>
 
-      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(categoriesWithTiles.length, 6)}, minmax(0,1fr))` }}>
+      <div className="grid gap-x-6 gap-y-5" style={{ gridTemplateColumns: `repeat(${Math.min(categoriesWithTiles.length, 3)}, minmax(0,1fr))` }}>
         {categoriesWithTiles.map(({ category, tiles }) => (
-          <div key={category.id} className="flex flex-col gap-2">
-            <div className="text-center p-2 rounded-lg font-bold text-sm" style={{ background: `${category.color}33`, color: category.color }}>
-              {category.icon} {category.name}
+          <div key={category.id} className="flex flex-col gap-2.5">
+            <div className="text-center py-3 px-2 rounded-xl font-extrabold" style={{ background: `${category.color}33`, color: category.color }}>
+              <div className="text-3xl leading-none mb-1">{category.icon}</div>
+              <div className="text-lg">{category.name}</div>
             </div>
             {tiles.map((tile) => (
               <button
                 key={tile.gameQuestionId}
                 disabled={!!tile.answeredByTeamId}
                 onClick={() => openQuestion(tile)}
-                className="card py-4 font-extrabold text-lg transition-transform hover:scale-[1.03] disabled:hover:scale-100 relative"
+                className="card py-5 font-extrabold text-2xl transition-transform hover:scale-[1.03] disabled:hover:scale-100 relative"
                 style={{
                   opacity: tile.answeredByTeamId ? 0.35 : 1,
                   background: tile.answeredByTeamId
