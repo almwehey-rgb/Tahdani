@@ -183,6 +183,16 @@ export default function Board() {
     }
   }
 
+  async function adjustScore(teamId: string, delta: number) {
+    if (!board) return;
+    try {
+      const { data } = await api.post(`/games/${id}/teams/${teamId}/adjust-score`, { delta });
+      setBoard({ ...board, teams: board.teams.map((t) => (t.id === teamId ? { ...t, score: data.team.score } : t)) });
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
+  }
+
   async function finishGame() {
     if (!window.confirm('هل تريد إنهاء اللعبة؟')) return;
     try {
@@ -213,7 +223,27 @@ export default function Board() {
               <p className="text-lg font-extrabold" style={{ color: team.color }}>
                 {team.name} {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
               </p>
-              <p className="text-3xl font-black">{team.score}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-3xl font-black">{team.score}</p>
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    className="w-6 h-6 rounded-full text-sm font-black flex items-center justify-center leading-none"
+                    style={{ background: `${team.color}33`, color: team.color }}
+                    onClick={() => adjustScore(team.id, 50)}
+                    title="أضف نقاط"
+                  >
+                    +
+                  </button>
+                  <button
+                    className="w-6 h-6 rounded-full text-sm font-black flex items-center justify-center leading-none"
+                    style={{ background: `${team.color}33`, color: team.color }}
+                    onClick={() => adjustScore(team.id, -50)}
+                    title="اخصم نقاط"
+                  >
+                    −
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="flex gap-1.5">
               {team.lifelines.map((l) => (

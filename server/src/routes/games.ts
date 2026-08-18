@@ -220,6 +220,24 @@ router.post('/:id/lifelines/:lifelineId/use', requireAuth, async (req: AuthedReq
   res.json({ lifeline: updated, teams, stolen });
 });
 
+const adjustScoreSchema = z.object({ delta: z.number().int().min(-1000).max(1000) });
+
+router.post('/:id/teams/:teamId/adjust-score', requireAuth, async (req: AuthedRequest, res) => {
+  const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+  const parsed = adjustScoreSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
+
+  const team = await prisma.team.findFirst({ where: { id: req.params.teamId, gameId: game.id } });
+  if (!team) return res.status(404).json({ error: 'الفريق غير موجود' });
+
+  const updated = await prisma.team.update({
+    where: { id: team.id },
+    data: { score: Math.max(0, team.score + parsed.data.delta) },
+  });
+  res.json({ team: updated });
+});
+
 const varSchema = z.object({ questionId: z.string(), note: z.string().min(2) });
 
 router.post('/:id/var', requireAuth, async (req: AuthedRequest, res) => {
