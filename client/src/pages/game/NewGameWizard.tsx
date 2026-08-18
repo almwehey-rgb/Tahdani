@@ -282,10 +282,16 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                       className="relative aspect-[16/10]"
                       style={{ background: `linear-gradient(160deg, ${c.color}66, ${c.color}22)` }}
                     >
-                      {c.imageUrl ? (
-                        <img src={c.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-4xl">{c.icon}</div>
+                      <div className="absolute inset-0 flex items-center justify-center text-4xl">{c.icon}</div>
+                      {c.imageUrl && (
+                        <img
+                          src={c.imageUrl}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-contain p-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
                       )}
                       {selected && (
                         <div className="absolute inset-0 flex items-center justify-center text-3xl" style={{ background: `${c.color}55` }}>

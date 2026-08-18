@@ -68,7 +68,7 @@ async function main() {
       name: 'رياضة',
       icon: '⚽',
       color: '#2FBF71',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Football_in_Bloomington%2C_Indiana%2C_1995.jpg/330px-Football_in_Bloomington%2C_Indiana%2C_1995.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/basketball.svg',
       questions: [
         { text: 'كم عدد لاعبي الفريق الواحد في كرة القدم داخل الملعب؟', answer: '11 لاعبا', points: 100 },
         { text: 'في أي دولة أقيمت كأس العالم 2022؟', answer: 'قطر', points: 200 },
@@ -79,7 +79,7 @@ async function main() {
       name: 'سينما وأفلام',
       icon: '🎬',
       color: '#E0526C',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Main_Cast_%28206644687%29.jpeg/330px-Main_Cast_%28206644687%29.jpeg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/movie-night.svg',
       questions: [
         { text: 'ما اسم الفيلم الذي يدور حول سفينة غارقة عام 1912؟', answer: 'تايتانيك', points: 100 },
         { text: 'من مخرج سلسلة أفلام "The Dark Knight"؟', answer: 'كريستوفر نولان', points: 200 },
@@ -90,7 +90,7 @@ async function main() {
       name: 'تاريخ',
       icon: '📜',
       color: '#C98A2E',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Denis_Bourez_-_British_Museum%2C_London_%288747049029%29_%282%29.jpg/330px-Denis_Bourez_-_British_Museum%2C_London_%288747049029%29_%282%29.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/art-museum.svg',
       questions: [
         { text: 'في أي عام سقطت الدولة الأموية؟', answer: '750 ميلادي', points: 100 },
         { text: 'من هو أول خليفة راشدي؟', answer: 'أبو بكر الصديق رضي الله عنه', points: 200 },
@@ -101,7 +101,7 @@ async function main() {
       name: 'جغرافيا',
       icon: '🌍',
       color: '#2E8FC9',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/The_Great_Globe%2C_Guyot_Hall%2C_Princeton_University.jpg/330px-The_Great_Globe%2C_Guyot_Hall%2C_Princeton_University.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/map.svg',
       questions: [
         { text: 'ما أطول نهر في العالم؟', answer: 'نهر النيل', points: 100 },
         { text: 'ما عاصمة أستراليا؟', answer: 'كانبيرا', points: 200, hint: 'ليست سيدني!' },
@@ -112,7 +112,7 @@ async function main() {
       name: 'علوم',
       icon: '🔬',
       color: '#5C7CE0',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Carina_Nebula.jpg/330px-Carina_Nebula.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/science.svg',
       questions: [
         { text: 'ما الغاز الذي يشكل الجزء الأكبر من الغلاف الجوي للأرض؟', answer: 'النيتروجين', points: 100 },
         { text: 'كم عدد عظام جسم الإنسان البالغ؟', answer: '206 عظمة', points: 200 },
@@ -123,7 +123,7 @@ async function main() {
       name: 'فن وموسيقى',
       icon: '🎨',
       color: '#B15CE0',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Steinway_Vienna_002.JPG/330px-Steinway_Vienna_002.JPG',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/compose-music.svg',
       questions: [
         { text: 'من رسم لوحة "الموناليزا"؟', answer: 'ليوناردو دافنشي', points: 100 },
         { text: 'كم عدد أوتار آلة العود عادة؟', answer: '5 أو 6 أوتار', points: 200 },
@@ -134,7 +134,7 @@ async function main() {
       name: 'أدب وثقافة',
       icon: '📚',
       color: '#D9A441',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/SanDiegoCityCollegeLearningResource_-_bookshelf.jpg/330px-SanDiegoCityCollegeLearningResource_-_bookshelf.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/book-lover.svg',
       questions: [
         { text: 'من مؤلف رواية "مدن الملح"؟', answer: 'عبدالرحمن منيف', points: 100 },
         { text: 'من كاتب "ألف ليلة وليلة" الشهيرة (سرد شعبي وليس مؤلفا واحدا) — من الشخصية الراوية للحكايات؟', answer: 'شهرزاد', points: 200 },
@@ -145,7 +145,7 @@ async function main() {
       name: 'تكنولوجيا',
       icon: '💻',
       color: '#3FC6C6',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/HONDA_ASIMO.jpg/330px-HONDA_ASIMO.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/robotics.svg',
       questions: [
         { text: 'ما اختصار "AI" في مجال التقنية؟', answer: 'الذكاء الاصطناعي', points: 100 },
         { text: 'من مؤسس شركة مايكروسوفت؟', answer: 'بيل غيتس', points: 200 },
@@ -156,7 +156,7 @@ async function main() {
       name: 'معلومات عامة',
       icon: '💡',
       color: '#E0C23F',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Set_of_various_puzzles.jpg/330px-Set_of_various_puzzles.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/quiz.svg',
       questions: [
         { text: 'كم عدد أيام السنة الكبيسة؟', answer: '366 يوما', points: 100 },
         { text: 'ما هي العملة الرسمية لليابان؟', answer: 'الين الياباني', points: 200 },
@@ -179,7 +179,7 @@ async function main() {
       icon: '✏️',
       color: '#E0526C',
       type: 'DRAWING',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Colouring_pencils.jpg/330px-Colouring_pencils.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/character-drawing.svg',
       questions: [
         { text: 'ارسم الكلمة واجعل فريقك يخمنها خلال الوقت المحدد', answer: 'أسد', points: 100 },
         { text: 'ارسم الكلمة واجعل فريقك يخمنها خلال الوقت المحدد', answer: 'طائرة', points: 200 },
@@ -295,7 +295,7 @@ async function main() {
       name: 'سيرة ذاتية',
       icon: '👤',
       color: '#D9534F',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/WALDST3.jpg/330px-WALDST3.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/profile.svg',
       questions: [
         { text: 'عالم ألماني اشتهر بنظرية النسبية، من هو؟', answer: 'ألبرت أينشتاين', points: 100 },
         { text: 'رسام إيطالي رسم لوحة الموناليزا، من هو؟', answer: 'ليوناردو دافنشي', points: 100 },
@@ -339,7 +339,7 @@ async function main() {
       name: 'عالم الشعر',
       icon: '🖋️',
       color: '#4C6FE0',
-      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Fountain_pen_writing_%28literacy%29.jpg/330px-Fountain_pen_writing_%28literacy%29.jpg',
+      imageUrl: 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/writer.svg',
       questions: [
         { text: 'من الشاعر الجاهلي صاحب المعلقة المشهورة، الملقب بـ"الملك الضليل"؟', answer: 'امرؤ القيس', points: 100 },
         { text: 'من الشاعر المصري الملقب بـ"أمير الشعراء"؟', answer: 'أحمد شوقي', points: 100 },
@@ -434,7 +434,7 @@ async function main() {
   }
 
   // Kids category
-  const kidsImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/ToyCars.jpg/330px-ToyCars.jpg';
+  const kidsImageUrl = 'https://cdn.jsdelivr.net/gh/balazser/undraw-svg-collection@main/svgs/children.svg';
   let kids = await prisma.category.findFirst({ where: { name: 'عالم الأطفال' } });
   if (!kids) {
     kids = await prisma.category.create({

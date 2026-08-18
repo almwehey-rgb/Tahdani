@@ -274,10 +274,16 @@ export default function Board() {
               className="relative rounded-xl overflow-hidden aspect-[16/10]"
               style={{ background: `linear-gradient(160deg, ${category.color}66, ${category.color}22)` }}
             >
-              {category.imageUrl ? (
-                <img src={category.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-6xl">{category.icon}</div>
+              <div className="absolute inset-0 flex items-center justify-center text-6xl">{category.icon}</div>
+              {category.imageUrl && (
+                <img
+                  src={category.imageUrl}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-contain p-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               )}
               <div
                 className="absolute bottom-0 inset-x-0 py-2 px-2 text-center font-extrabold text-white text-lg"
