@@ -180,7 +180,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
+    <div className="max-w-[1600px] mx-auto px-4 py-10">
       <h1 className="text-2xl font-extrabold mb-1">{mode === 'KIDS' ? 'واجهة الأطفال' : 'إعداد لعبة جديدة'}</h1>
       <div className="flex items-center gap-2 mb-6 text-sm text-[var(--color-ink-dim)]">
         <StepDot active={step === 'teams'} label="الفرق" />
