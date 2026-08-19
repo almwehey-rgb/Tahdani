@@ -194,6 +194,39 @@ router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedReques
   res.json({ teams });
 });
 
+router.post('/:id/questions/:gqId/undo', requireAuth, async (req: AuthedRequest, res) => {
+  const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+
+  const gq = await prisma.gameQuestion.findUnique({ where: { id: req.params.gqId }, include: { question: true } });
+  if (!gq) return res.status(404).json({ error: 'السؤال غير موجود' });
+  if (!gq.answeredByTeamId) return res.status(400).json({ error: 'هذا السؤال ما تم الإجابة عليه بعد' });
+
+  await prisma.$transaction([
+    prisma.gameQuestion.update({ where: { id: gq.id }, data: { answeredByTeamId: null, isCorrect: null } }),
+    ...(gq.isCorrect
+      ? [prisma.team.update({ where: { id: gq.answeredByTeamId }, data: { score: { decrement: gq.question.points } } })]
+      : []),
+  ]);
+
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
+  res.json({
+    teams,
+    tile: {
+      gameQuestionId: gq.id,
+      text: gq.question.text,
+      hint: gq.question.hint,
+      hint2: gq.question.hint2,
+      hint3: gq.question.hint3,
+      hint4: gq.question.hint4,
+      answer: gq.question.answer,
+      imageUrl: gq.question.imageUrl,
+      points: gq.question.points,
+      isDrawing: gq.question.isDrawing,
+    },
+  });
+});
+
 const useLifelineSchema = z.object({ gameQuestionId: z.string().optional() });
 
 router.post('/:id/lifelines/:lifelineId/use', requireAuth, async (req: AuthedRequest, res) => {

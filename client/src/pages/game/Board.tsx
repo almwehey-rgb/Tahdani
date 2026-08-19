@@ -123,8 +123,24 @@ export default function Board() {
   const totalTiles = board?.tiles.length ?? 0;
   const allAnswered = totalTiles > 0 && answeredCount === totalTiles;
 
+  async function undoAnswer(tile: GameTile) {
+    if (!window.confirm('تراجع عن الإجابة وإعادة فتح السؤال؟')) return;
+    try {
+      const { data } = await api.post(`/games/${id}/questions/${tile.gameQuestionId}/undo`);
+      const reopened = { ...tile, ...data.tile, answeredByTeamId: null, isCorrect: null, isOpened: true };
+      setBoard((prev) =>
+        prev
+          ? { ...prev, teams: data.teams, tiles: prev.tiles.map((t) => (t.gameQuestionId === tile.gameQuestionId ? reopened : t)) }
+          : prev,
+      );
+      await openQuestion(reopened);
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
+  }
+
   async function openQuestion(tile: GameTile) {
-    if (tile.answeredByTeamId) return;
+    if (tile.answeredByTeamId) return undoAnswer(tile);
     setPickedPlayer(null);
     setTrapTargetIndex(null);
     setDoublePointsActive(false);
@@ -383,9 +399,9 @@ export default function Board() {
           const renderTile = (tile: GameTile, isLast: boolean) => (
             <button
               key={tile.gameQuestionId}
-              disabled={!!tile.answeredByTeamId}
+              title={tile.answeredByTeamId ? 'اضغط للتراجع عن الإجابة وإعادة فتح السؤال' : undefined}
               onClick={() => openQuestion(tile)}
-              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-white/5 disabled:hover:bg-transparent relative ${
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-white/5 relative ${
                 isLast ? '' : 'border-b'
               }`}
               style={{
