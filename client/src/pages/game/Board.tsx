@@ -119,6 +119,16 @@ export default function Board() {
     ? [openTile.hint, openTile.hint2, openTile.hint3, openTile.hint4].filter((h): h is string => !!h)
     : [];
 
+  // Long questions at the same fixed huge font wrap to 3+ lines and crowd
+  // out the answer/buttons below — step the size down as the text grows
+  // instead of always using the "short question" size.
+  const questionTextClass = (() => {
+    const len = openTile?.text?.length ?? 0;
+    if (len > 140) return 'text-lg sm:text-xl md:text-2xl';
+    if (len > 80) return 'text-xl sm:text-2xl md:text-3xl';
+    return 'text-3xl sm:text-5xl';
+  })();
+
   const answeredCount = board?.tiles.filter((t) => t.answeredByTeamId).length ?? 0;
   const totalTiles = board?.tiles.length ?? 0;
   const allAnswered = totalTiles > 0 && answeredCount === totalTiles;
@@ -491,7 +501,7 @@ export default function Board() {
               ) : (
                 <>
                   <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-0 py-4">
-                    <p className="text-3xl sm:text-5xl font-bold text-center leading-relaxed">{openTile.text}</p>
+                    <p className={`${questionTextClass} font-bold text-center leading-relaxed`}>{openTile.text}</p>
                     {openTile.imageUrl && (
                       <img
                         src={openTile.imageUrl}
