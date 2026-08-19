@@ -500,7 +500,7 @@ export default function Board() {
                 </>
               ) : (
                 <>
-                  <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-0 py-4">
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-0 py-4 overflow-y-auto">
                     <p className={`${questionTextClass} font-bold text-center leading-relaxed`}>{openTile.text}</p>
                     {openTile.imageUrl && (
                       <img
