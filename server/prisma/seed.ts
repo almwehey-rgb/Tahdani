@@ -1589,6 +1589,15 @@ async function main() {
     },
   ];
 
+  // One-time cleanup: an earlier manually-entered "خمن الدولة" category had
+  // all 4 hints crammed into the question text with no hint fields set at
+  // all. Clear those out before the properly-split questions below are
+  // added to the same (matched-by-name) category.
+  const staleGuessCategory = await prisma.category.findFirst({ where: { name: 'خمن الدولة' } });
+  if (staleGuessCategory) {
+    await prisma.question.deleteMany({ where: { categoryId: staleGuessCategory.id, hint: null, hint2: null } });
+  }
+
   for (const c of categoryDefs) {
     let category = await prisma.category.findFirst({ where: { name: c.name } });
     if (!category) {
