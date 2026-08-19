@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../../api/client';
 import { useAuthStore } from '../../store/auth';
 import type { Category, LifelineType } from '../../api/types';
-import { LIFELINE_LABELS, LIFELINE_TYPES } from '../../api/types';
+import { LIFELINE_LABELS } from '../../api/types';
 import Spinner from '../../components/Spinner';
 
 const PALETTE = ['#ff7a4d', '#3fc6ff', '#7c5cff', '#34d399', '#ffc94d', '#ff5c72'];
@@ -18,6 +18,8 @@ interface WizardTeam {
 function emptyTeam(name: string, color: string): WizardTeam {
   return { name, color, players: [''] };
 }
+
+const SELECTABLE_LIFELINE_TYPES: LifelineType[] = ['PHONE_A_FRIEND', 'STEAL_POINTS', 'DOUBLE_POINTS'];
 
 const TEAM_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
 const TEAM_NAME_DEFAULTS = ['الفريق الأول', 'الفريق الثاني', 'الفريق الثالث', 'الفريق الرابع'];
@@ -358,7 +360,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                   {team.name} : اختر 3 وسائل مساعدة
                 </p>
                 <div className="flex flex-col gap-2">
-                  {LIFELINE_TYPES.map((type) => {
+                  {SELECTABLE_LIFELINE_TYPES.map((type) => {
                     const chosen = (lifelines[idx] || []).includes(type);
                     return (
                       <button
