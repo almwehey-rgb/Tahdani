@@ -410,7 +410,7 @@ export default function Board() {
               key={tile.gameQuestionId}
               title={tile.answeredByTeamId ? 'اضغط للتراجع عن الإجابة وإعادة فتح السؤال' : undefined}
               onClick={() => openQuestion(tile)}
-              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-black/5 relative ${
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-[var(--color-tile-hover)] relative ${
                 isLast ? '' : 'border-b'
               }`}
               style={{
