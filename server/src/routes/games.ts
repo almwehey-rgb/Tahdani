@@ -108,7 +108,7 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
   if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
 
   const [teams, gameCategories, gameQuestions] = await Promise.all([
-    prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } }),
+    prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } }),
     prisma.gameCategory.findMany({ where: { gameId: game.id }, include: { category: true } }),
     prisma.gameQuestion.findMany({ where: { gameId: game.id }, include: { question: true } }),
   ]);
@@ -190,7 +190,7 @@ router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedReques
   // Must match the shape /board returns (players + lifelines) — the client
   // replaces its whole teams array with this response, so dropping either
   // relation here silently breaks every screen that reads team.lifelines.
-  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } });
   res.json({ teams });
 });
 
@@ -209,7 +209,7 @@ router.post('/:id/questions/:gqId/undo', requireAuth, async (req: AuthedRequest,
       : []),
   ]);
 
-  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } });
   res.json({
     teams,
     tile: {
@@ -268,7 +268,7 @@ router.post('/:id/lifelines/:lifelineId/use', requireAuth, async (req: AuthedReq
   }
 
   const updated = await prisma.teamLifeline.update({ where: { id: req.params.lifelineId }, data: { used: true } });
-  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true } });
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } });
   res.json({ lifeline: updated, teams, stolen });
 });
 
