@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Logo from './Logo';
 import { useAuthStore } from '../store/auth';
 import { useGameUiStore } from '../store/gameUi';
+import { useThemeStore } from '../store/theme';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
@@ -23,10 +24,11 @@ export default function Layout() {
   const [open, setOpen] = useState(false);
   const showFooter = !HIDE_FOOTER_PATTERN.test(location.pathname);
   const finishGameHandler = useGameUiStore((s) => s.finishGameHandler);
+  const { theme, toggleTheme } = useThemeStore();
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 backdrop-blur bg-[rgba(255,255,255,0.85)] border-b border-[var(--color-border)]">
+      <header className="sticky top-0 z-40 backdrop-blur bg-[var(--color-header-bg)] border-b border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link to="/">
             <Logo />
@@ -57,6 +59,14 @@ export default function Layout() {
             ) : (
               <Link to="/login" className="btn btn-primary !py-2 !px-4 text-sm">دخول</Link>
             )}
+            <button
+              className="btn btn-ghost !py-2 !px-3"
+              onClick={toggleTheme}
+              aria-label="تبديل المظهر"
+              title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الليلي'}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
             <button
               className="md:hidden btn btn-ghost !py-2 !px-3"
               onClick={() => setOpen((o) => !o)}
