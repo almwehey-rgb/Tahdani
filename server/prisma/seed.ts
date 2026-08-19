@@ -11,7 +11,14 @@ const extraQuestions = extraQuestionsRaw as unknown as Record<
   { text: string; answer: string; points: number; hint?: string | null }[]
 >;
 function extrasFor(categoryName: string) {
-  return (extraQuestions[categoryName] ?? []).map((q) => ({ ...q, hint: q.hint ?? undefined, imageUrl: undefined as string | undefined }));
+  return (extraQuestions[categoryName] ?? []).map((q) => ({
+    ...q,
+    hint: q.hint ?? undefined,
+    hint2: undefined as string | undefined,
+    hint3: undefined as string | undefined,
+    hint4: undefined as string | undefined,
+    imageUrl: undefined as string | undefined,
+  }));
 }
 
 async function main() {
