@@ -188,7 +188,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
             onClick={mode === 'CLASSIC' ? goLifelines : () => createGame(selectedCategories, {})}
             disabled={creating}
           >
-            {creating ? 'جاري الإنشاء...' : mode === 'CLASSIC' ? 'متابعة: وسائل المساعدة ←' : 'متابعة: ابدأ اللعب ←'}
+            {creating ? 'جاري الإنشاء...' : mode === 'CLASSIC' ? 'التالي: وسائل المساعدة' : 'ابدأ اللعب'}
           </button>
         </div>
       )}
