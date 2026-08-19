@@ -496,31 +496,27 @@ export default function Board() {
                   </button>
                 ))}
               {tileHints.length > 0 &&
-                (activeTeam.lifelines.some((l) => l.type === 'MORE_HINT' && l.used) ? (
-                  (() => {
-                    const shownCount = Math.max(revealedHints, 1);
-                    return (
-                      <div className="w-full flex flex-col items-center gap-1 mt-1">
-                        {tileHints.slice(0, shownCount).map((h, i) => (
-                          <span key={i} className="text-xs text-[var(--color-ink-faint)] text-center">
-                            💡 {h}
-                          </span>
-                        ))}
-                        {shownCount < tileHints.length && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost !py-1 !px-3 text-xs mt-1"
-                            onClick={() => setRevealedHints(shownCount + 1)}
-                          >
-                            الهنت التالي ▶
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <span className="text-xs text-[var(--color-ink-faint)] w-full text-center mt-1">💡 استخدم "وضحلي أكثر" لعرض التلميح</span>
-                ))}
+                (() => {
+                  const shownCount = Math.max(revealedHints, 1);
+                  return (
+                    <div className="w-full flex flex-col items-center gap-1 mt-1">
+                      {tileHints.slice(0, shownCount).map((h, i) => (
+                        <span key={i} className="text-xs text-[var(--color-ink-faint)] text-center">
+                          💡 {h}
+                        </span>
+                      ))}
+                      {shownCount < tileHints.length && (
+                        <button
+                          type="button"
+                          className="btn btn-ghost !py-1 !px-3 text-xs mt-1"
+                          onClick={() => setRevealedHints(shownCount + 1)}
+                        >
+                          الهنت التالي ▶
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-2">
