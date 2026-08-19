@@ -1596,6 +1596,12 @@ async function main() {
   const staleGuessCategory = await prisma.category.findFirst({ where: { name: 'خمن الدولة' } });
   if (staleGuessCategory) {
     await prisma.question.deleteMany({ where: { categoryId: staleGuessCategory.id, hint: null, hint2: null } });
+    // The category may have been soft-deleted (active: false) via the admin
+    // panel while clearing out the old data — make sure it's live again now
+    // that it's about to be repopulated with the properly-split questions.
+    if (!staleGuessCategory.active) {
+      await prisma.category.update({ where: { id: staleGuessCategory.id }, data: { active: true } });
+    }
   }
 
   for (const c of categoryDefs) {
