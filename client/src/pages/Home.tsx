@@ -1,4 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
+import { useAuthStore } from '../store/auth';
+import type { Game } from '../api/types';
 
 const features = [
   { icon: '🗂️', title: '6 فئات من اختيارك', desc: 'شكّل لوحة اللعبة باختيار 6 فئات من عشرات الفئات المتجددة.' },
@@ -10,8 +14,42 @@ const features = [
 ];
 
 export default function Home() {
+  const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
+  const [activeGame, setActiveGame] = useState<Game | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/games/active').then(({ data }) => setActiveGame(data.game));
+  }, [user]);
+
   return (
     <div>
+      {activeGame && (
+        <section className="max-w-6xl mx-auto px-4 pt-6">
+          <div className="card p-5 flex flex-col sm:flex-row items-center justify-between gap-4 animate-pop">
+            <div>
+              <p className="font-bold">لديك لعبة نشطة الآن</p>
+              <p className="text-sm text-[var(--color-ink-dim)]">هل تريد متابعة اللعب أو الاعادة؟</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button className="btn btn-primary" onClick={() => navigate(`/game/${activeGame.id}/board`)}>
+                متابعة اللعب
+              </button>
+              <button
+                className="btn btn-ghost"
+                onClick={async () => {
+                  await api.post(`/games/${activeGame.id}/abandon`);
+                  setActiveGame(null);
+                }}
+              >
+                إعادة البدء
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="max-w-6xl mx-auto px-4 pt-14 pb-10 text-center">
         <div
           className="inline-block px-4 py-1.5 rounded-full text-xs font-bold mb-5"
