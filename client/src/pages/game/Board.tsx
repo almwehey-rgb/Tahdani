@@ -491,7 +491,9 @@ export default function Board() {
                 ))}
               {openTile.hint && (
                 <span className="text-xs text-[var(--color-ink-faint)] w-full text-center mt-1">
-                  💡 {activeTeam.lifelines.some((l) => l.type === 'MORE_HINT' && l.used) ? openTile.hint : 'استخدم "وضحلي أكثر" لعرض التلميح'}
+                  {activeTeam.lifelines.some((l) => l.type === 'MORE_HINT' && l.used)
+                    ? [openTile.hint, openTile.hint2].filter(Boolean).map((h) => `💡 ${h}`).join('  ')
+                    : '💡 استخدم "وضحلي أكثر" لعرض التلميح'}
                 </span>
               )}
             </div>

@@ -53,6 +53,7 @@ const questionSchema = z.object({
   text: z.string().min(2),
   answer: z.string().min(1),
   hint: z.string().optional().nullable(),
+  hint2: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
   points: z.number().int().min(50).max(1000).default(200),
   isDrawing: z.boolean().default(false),

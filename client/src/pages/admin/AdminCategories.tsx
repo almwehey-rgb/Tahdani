@@ -13,7 +13,8 @@ export default function AdminCategories() {
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const [newCat, setNewCat] = useState({ name: '', icon: '🎯', color: '#6C4CE0', type: 'PERMANENT' as Category['type'] });
-  const [newQ, setNewQ] = useState({ text: '', answer: '', hint: '', points: 200, isDrawing: false });
+  const [newQ, setNewQ] = useState({ text: '', answer: '', hint: '', hint2: '', points: 200, isDrawing: false });
+  const [showHint2, setShowHint2] = useState(false);
 
   async function loadCategories() {
     setLoading(true);
@@ -57,8 +58,9 @@ export default function AdminCategories() {
   async function addQuestion(categoryId: string) {
     if (newQ.text.trim().length < 2 || newQ.answer.trim().length < 1) return toast.error('يرجى تصحيح الأخطاء');
     try {
-      await api.post(`/categories/${categoryId}/questions`, { ...newQ, hint: newQ.hint || undefined });
-      setNewQ({ text: '', answer: '', hint: '', points: 200, isDrawing: false });
+      await api.post(`/categories/${categoryId}/questions`, { ...newQ, hint: newQ.hint || undefined, hint2: newQ.hint2 || undefined });
+      setNewQ({ text: '', answer: '', hint: '', hint2: '', points: 200, isDrawing: false });
+      setShowHint2(false);
       const { data } = await api.get(`/categories/${categoryId}/questions`);
       setQuestions(data.questions);
       loadCategories();
@@ -140,6 +142,18 @@ export default function AdminCategories() {
                   <input className="input" placeholder="نص السؤال" value={newQ.text} onChange={(e) => setNewQ({ ...newQ, text: e.target.value })} />
                   <input className="input" placeholder="الإجابة" value={newQ.answer} onChange={(e) => setNewQ({ ...newQ, answer: e.target.value })} />
                   <input className="input" placeholder="تلميح (اختياري)" value={newQ.hint} onChange={(e) => setNewQ({ ...newQ, hint: e.target.value })} />
+                  {showHint2 ? (
+                    <input
+                      className="input"
+                      placeholder="التلميح الثاني (اختياري)"
+                      value={newQ.hint2}
+                      onChange={(e) => setNewQ({ ...newQ, hint2: e.target.value })}
+                    />
+                  ) : (
+                    <button type="button" className="btn btn-ghost text-sm" onClick={() => setShowHint2(true)}>
+                      + إضافة الهنت الثاني
+                    </button>
+                  )}
                   <select className="input" value={newQ.points} onChange={(e) => setNewQ({ ...newQ, points: Number(e.target.value) })}>
                     <option value={200}>200</option>
                     <option value={400}>400</option>

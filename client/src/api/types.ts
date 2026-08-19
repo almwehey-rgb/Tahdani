@@ -24,6 +24,7 @@ export interface Question {
   text: string;
   answer: string;
   hint?: string | null;
+  hint2?: string | null;
   points: number;
   isDrawing: boolean;
 }
@@ -119,6 +120,7 @@ export interface GameTile {
   usedVar: boolean;
   text?: string;
   hint?: string | null;
+  hint2?: string | null;
   answer?: string;
   imageUrl?: string | null;
 }
