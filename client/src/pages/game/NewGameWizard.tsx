@@ -181,6 +181,17 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 py-10">
+      {step === 'categories' && selectedCategories.length === requiredCategoryCount && (
+        <div className="sticky top-16 z-30 -mx-4 px-4 py-2 mb-3 bg-[var(--color-bg)]/95 backdrop-blur border-b border-[var(--color-border)]">
+          <button
+            className="btn btn-primary w-full animate-pop"
+            onClick={mode === 'CLASSIC' ? goLifelines : () => createGame(selectedCategories, {})}
+            disabled={creating}
+          >
+            {creating ? 'جاري الإنشاء...' : mode === 'CLASSIC' ? 'متابعة: وسائل المساعدة ←' : 'متابعة: ابدأ اللعب ←'}
+          </button>
+        </div>
+      )}
       <h1 className="text-2xl font-extrabold mb-1">{mode === 'KIDS' ? 'واجهة الأطفال' : 'إعداد لعبة جديدة'}</h1>
       <div className="flex items-center gap-2 mb-6 text-sm text-[var(--color-ink-dim)]">
         <StepDot active={step === 'teams'} label="الفرق" />
@@ -297,15 +308,6 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
               رجوع
             </button>
           </div>
-          {selectedCategories.length === requiredCategoryCount && (
-            <button
-              className="btn btn-primary w-full mb-4 sticky top-20 z-10 animate-pop"
-              onClick={mode === 'CLASSIC' ? goLifelines : () => createGame(selectedCategories, {})}
-              disabled={creating}
-            >
-              {creating ? 'جاري الإنشاء...' : mode === 'CLASSIC' ? 'متابعة: وسائل المساعدة ←' : 'متابعة: ابدأ اللعب ←'}
-            </button>
-          )}
           <input
             className="input mb-4"
             placeholder="🔍 ابحث عن فئة..."
