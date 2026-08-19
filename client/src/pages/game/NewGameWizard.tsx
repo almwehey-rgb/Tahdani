@@ -353,7 +353,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                         )}
                       </div>
                       <div
-                        className="px-2 py-1.5 text-center text-xs font-bold text-white truncate"
+                        className="px-2 py-2 text-center text-base sm:text-lg font-extrabold text-white leading-tight line-clamp-2"
                         style={{ background: c.color }}
                       >
                         {c.name}
