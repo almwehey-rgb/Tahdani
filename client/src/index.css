@@ -3,26 +3,26 @@
 @theme {
   --font-sans: "Cairo", "Tahoma", ui-sans-serif, system-ui, sans-serif;
 
-  --color-bg: #0f1024;
-  --color-bg-soft: #171a3a;
-  --color-surface: #1e2148;
-  --color-surface-hi: #262a5c;
-  --color-border: #34397a;
+  --color-bg: #ffffff;
+  --color-bg-soft: #f4f4f9;
+  --color-surface: #ffffff;
+  --color-surface-hi: #eef0f8;
+  --color-border: #e1e2ee;
 
   --color-brand: #7c5cff;
-  --color-brand-hi: #9b82ff;
+  --color-brand-hi: #6a45f0;
   --color-brand-dim: #5a3fd6;
   --color-gold: #ffc94d;
-  --color-gold-hi: #ffdb85;
+  --color-gold-hi: #f5a623;
 
-  --color-ink: #f3f2ff;
-  --color-ink-dim: #b7b6de;
-  --color-ink-faint: #7f7db0;
+  --color-ink: #14152b;
+  --color-ink-dim: #55597a;
+  --color-ink-faint: #8a8dab;
 
-  --color-success: #34d399;
-  --color-danger: #ff5c72;
-  --color-team-a: #ff7a4d;
-  --color-team-b: #3fc6ff;
+  --color-success: #16a374;
+  --color-danger: #e0334f;
+  --color-team-a: #e85a2e;
+  --color-team-b: #1f9fd9;
 }
 
 html, body, #root {
@@ -30,7 +30,7 @@ html, body, #root {
 }
 
 body {
-  background: radial-gradient(circle at 20% -10%, #2a1f66 0%, var(--color-bg) 45%) fixed;
+  background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

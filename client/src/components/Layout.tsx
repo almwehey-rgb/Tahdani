@@ -6,7 +6,9 @@ import { useGameUiStore } from '../store/gameUi';
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-    isActive ? 'bg-[var(--color-surface-hi)] text-white' : 'text-[var(--color-ink-dim)] hover:text-white'
+    isActive
+      ? 'bg-[var(--color-surface-hi)] text-[var(--color-ink)]'
+      : 'text-[var(--color-ink-dim)] hover:text-[var(--color-ink)]'
   }`;
 
 // The game board sizes itself to exactly fill the viewport below the
@@ -24,7 +26,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 backdrop-blur bg-[rgba(15,16,36,0.85)] border-b border-[var(--color-border)]">
+      <header className="sticky top-0 z-40 backdrop-blur bg-[rgba(255,255,255,0.85)] border-b border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Link to="/">
             <Logo />
