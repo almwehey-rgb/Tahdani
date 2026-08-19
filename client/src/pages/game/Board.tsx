@@ -500,18 +500,18 @@ export default function Board() {
                 </>
               ) : (
                 <>
-                  <div className="flex-1 flex flex-col items-center justify-start gap-4 min-h-0 py-4 overflow-y-auto">
-                    <p className={`${questionTextClass} font-bold text-center leading-relaxed`}>{openTile.text}</p>
+                  <div className="flex-1 min-h-0 overflow-y-auto py-4">
+                    <p className={`${questionTextClass} font-bold text-center leading-relaxed mb-4`}>{openTile.text}</p>
                     {openTile.imageUrl && (
                       <img
                         src={openTile.imageUrl}
                         alt=""
-                        className="mx-auto max-h-64 sm:max-h-80 rounded-lg border border-[var(--color-border)]"
+                        className="block mx-auto max-h-40 sm:max-h-56 rounded-lg border border-[var(--color-border)] mb-4"
                       />
                     )}
                     {showAnswer && (
                       <p
-                        className="text-center text-2xl sm:text-4xl font-extrabold p-4 rounded-lg"
+                        className="text-center text-2xl sm:text-4xl font-extrabold p-4 rounded-lg mb-4"
                         style={{ background: 'var(--color-surface-hi)', color: 'var(--color-success)' }}
                       >
                         {openTile.answer}
