@@ -1608,6 +1608,24 @@ async function main() {
     await prisma.question.deleteMany({
       where: { categoryId: staleGuessCategory.id, hint: null, hint2: null, gameQuestions: { none: {} } },
     });
+    // Any stale rows that survived (referenced by a played game, so they
+    // couldn't be deleted above) still show up as board tiles — rewrite
+    // them in place instead, splitting the crammed "١) ... ٢) ... ٣) ...
+    // ٤) ..." text back into hint/hint2/hint3/hint4. This is an update,
+    // not a delete, so the game-history foreign key isn't a problem.
+    const remainingStale = await prisma.question.findMany({
+      where: { categoryId: staleGuessCategory.id, hint: null, hint2: null },
+    });
+    const crammedHintPattern = /^[١1ا]\)\s*(.+?)\s*[٢2]\)\s*(.+?)\s*[٣3]\)\s*(.+?)\s*[٤4]\)\s*(.+)$/s;
+    for (const q of remainingStale) {
+      const match = q.text.match(crammedHintPattern);
+      if (!match) continue;
+      const [, hint, hint2, hint3, hint4] = match;
+      await prisma.question.update({
+        where: { id: q.id },
+        data: { text: 'خمن اسم الدولة من التلميحات الأربعة', hint, hint2, hint3, hint4 },
+      });
+    }
     // The category may have been soft-deleted (active: false) via the admin
     // panel while clearing out the old data — make sure it's live again now
     // that it's about to be repopulated with the properly-split questions.
