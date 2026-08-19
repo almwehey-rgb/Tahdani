@@ -1669,6 +1669,41 @@ async function main() {
     }
   }
 
+  // De-dupe "خمن الدولة": a rewritten legacy row (kept for its game
+  // history) and a freshly seeded row for the same country don't always
+  // share the exact same `answer` string (e.g. the legacy one might be
+  // missing the flag emoji), so the text+answer dedup check above can
+  // miss them and both end up on the board. Collapse by country name
+  // instead, preferring to keep whichever row is tied to real game
+  // history (or the more complete one if neither is).
+  const guessCategoryFinal = await prisma.category.findFirst({ where: { name: 'خمن الدولة' } });
+  if (guessCategoryFinal) {
+    const allGuessQuestions = await prisma.question.findMany({
+      where: { categoryId: guessCategoryFinal.id },
+      include: { _count: { select: { gameQuestions: true } } },
+    });
+    const normalizeAnswer = (s: string) =>
+      s
+        .replace(/[^\u0600-\u06FF\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const groups = new Map<string, typeof allGuessQuestions>();
+    for (const q of allGuessQuestions) {
+      const key = normalizeAnswer(q.answer);
+      if (!key) continue;
+      const group = groups.get(key);
+      if (group) group.push(q);
+      else groups.set(key, [q]);
+    }
+    for (const group of groups.values()) {
+      if (group.length < 2) continue;
+      const keeper =
+        group.find((q) => q._count.gameQuestions > 0) ?? group.find((q) => q.hint && q.hint2 && q.hint3 && q.hint4) ?? group[0];
+      const toDelete = group.filter((q) => q.id !== keeper.id).map((q) => q.id);
+      await prisma.question.deleteMany({ where: { id: { in: toDelete }, gameQuestions: { none: {} } } });
+    }
+  }
+
   // Seasonal Ramadan category
   const ramadanImageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Breaking_the_Fast_%282%29_%2827351979537%29.jpg/330px-Breaking_the_Fast_%282%29_%2827351979537%29.jpg';
   let ramadan = await prisma.category.findFirst({ where: { name: 'رمضانيات' } });
