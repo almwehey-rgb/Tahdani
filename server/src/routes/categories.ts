@@ -80,4 +80,9 @@ router.delete('/questions/:qid', requireAuth, requireAdmin, async (req, res) => 
   res.json({ ok: true });
 });
 
+router.delete('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
+  const { count } = await prisma.question.deleteMany({ where: { categoryId: req.params.id } });
+  res.json({ ok: true, count });
+});
+
 export default router;

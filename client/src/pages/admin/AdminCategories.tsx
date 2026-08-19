@@ -82,6 +82,13 @@ export default function AdminCategories() {
     loadCategories();
   }
 
+  async function deleteAllQuestions(categoryId: string) {
+    if (!window.confirm(`هل أنت متأكد؟ راح يتم حذف كل الأسئلة (${questions.length}) في هذه الفئة نهائياً.`)) return;
+    await api.delete(`/categories/${categoryId}/questions`);
+    setQuestions([]);
+    loadCategories();
+  }
+
   if (loading) return <Spinner />;
 
   return (
@@ -129,6 +136,13 @@ export default function AdminCategories() {
 
             {expanded === cat.id && (
               <div className="mt-4 border-t border-[var(--color-border)] pt-4">
+                {questions.length > 0 && (
+                  <div className="flex justify-end mb-2">
+                    <button className="text-[var(--color-danger)] text-sm" onClick={() => deleteAllQuestions(cat.id)}>
+                      حذف كل الأسئلة ({questions.length})
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-col gap-2 mb-4">
                   {questions.map((q) => (
                     <div key={q.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--color-bg-soft)]">
