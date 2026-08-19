@@ -468,52 +468,57 @@ export default function Board() {
           </div>
         {openTile && activeTeam && (
           <div className="absolute inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && null}>
-            <div className="card w-full h-full p-6 animate-pop overflow-y-auto">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-bold" style={{ color: activeTeam.color }}>
+            <div className="card w-full h-full p-6 sm:p-10 animate-pop overflow-y-auto flex flex-col">
+              <div className="flex items-center justify-between mb-3 shrink-0">
+                <span className="text-base sm:text-lg font-bold" style={{ color: activeTeam.color }}>
                   دور فريق: {activeTeam.name} {pickedPlayer && `— يجيب: ${pickedPlayer}`}
                   {doublePointsActive && <span className="text-[var(--color-gold)]"> — نقاط مضاعفة 2️⃣</span>}
                 </span>
-                <span className={`font-black text-lg ${timeLeft <= 5 ? 'text-[var(--color-danger)] animate-pulse-ring rounded-full px-2' : ''}`}>
+                <span className={`font-black text-2xl sm:text-3xl ${timeLeft <= 5 ? 'text-[var(--color-danger)] animate-pulse-ring rounded-full px-2' : ''}`}>
                   {phase === 'main' ? '⏱️' : '⏳'} {timeLeft}ث
                 </span>
               </div>
 
               {openTile.isDrawing ? (
                 <>
-                  <p className="text-center text-sm text-[var(--color-ink-dim)] mb-2">كلمة الرسم (لأعضاء الفريق الراسم فقط)</p>
-                  <p className="text-center text-2xl font-black mb-4">{showAnswer ? openTile.answer : '•••••'}</p>
-                  <button className="btn btn-ghost w-full mb-4" onClick={() => setShowAnswer((s) => !s)}>
+                  <p className="text-center text-base sm:text-lg text-[var(--color-ink-dim)] mb-2 shrink-0">كلمة الرسم (لأعضاء الفريق الراسم فقط)</p>
+                  <p className="text-center text-3xl sm:text-5xl font-black mb-4 shrink-0">{showAnswer ? openTile.answer : '•••••'}</p>
+                  <button className="btn btn-ghost w-full mb-4 text-lg sm:text-xl !py-3 shrink-0" onClick={() => setShowAnswer((s) => !s)}>
                     {showAnswer ? 'إخفاء الكلمة' : 'اظهر الكلمة للرسام'}
                   </button>
                   <DrawingCanvas />
                 </>
               ) : (
                 <>
-                  <p className="text-xl font-bold text-center mb-4 leading-relaxed">{openTile.text}</p>
-                  {openTile.imageUrl && (
-                    <img
-                      src={openTile.imageUrl}
-                      alt=""
-                      className="mx-auto mb-4 max-h-48 rounded-lg border border-[var(--color-border)]"
-                    />
-                  )}
-                  {showAnswer && (
-                    <p className="text-center text-lg font-extrabold mb-4 p-3 rounded-lg" style={{ background: 'var(--color-surface-hi)', color: 'var(--color-success)' }}>
-                      {openTile.answer}
-                    </p>
-                  )}
-                  <button className="btn btn-ghost w-full mb-4" onClick={() => setShowAnswer((s) => !s)}>
+                  <div className="flex-1 flex flex-col items-center justify-center gap-4 min-h-0 py-4">
+                    <p className="text-3xl sm:text-5xl font-bold text-center leading-relaxed">{openTile.text}</p>
+                    {openTile.imageUrl && (
+                      <img
+                        src={openTile.imageUrl}
+                        alt=""
+                        className="mx-auto max-h-64 sm:max-h-80 rounded-lg border border-[var(--color-border)]"
+                      />
+                    )}
+                    {showAnswer && (
+                      <p
+                        className="text-center text-2xl sm:text-4xl font-extrabold p-4 rounded-lg"
+                        style={{ background: 'var(--color-surface-hi)', color: 'var(--color-success)' }}
+                      >
+                        {openTile.answer}
+                      </p>
+                    )}
+                  </div>
+                  <button className="btn btn-ghost w-full mb-4 text-lg sm:text-xl !py-3 shrink-0" onClick={() => setShowAnswer((s) => !s)}>
                     {showAnswer ? 'إخفاء الإجابة' : 'اظهر الإجابة'}
                   </button>
                 </>
               )}
 
-              <div className="flex flex-wrap gap-2 justify-center mb-4">
+              <div className="flex flex-wrap gap-3 justify-center mb-4 shrink-0">
                 {activeTeam.lifelines
                   .filter((l) => !l.used)
                   .map((l) => (
-                    <button key={l.id} className="btn btn-ghost !py-1.5 !px-3 text-sm" onClick={() => useLifeline(l.type)}>
+                    <button key={l.id} className="btn btn-ghost !py-2.5 !px-4 text-base sm:text-lg" onClick={() => useLifeline(l.type)}>
                       {LIFELINE_LABELS[l.type].icon} {LIFELINE_LABELS[l.type].label}
                     </button>
                   ))}
@@ -521,16 +526,16 @@ export default function Board() {
                   (() => {
                     const shownCount = Math.max(revealedHints, 1);
                     return (
-                      <div className="w-full flex flex-col items-center gap-1 mt-1">
+                      <div className="w-full flex flex-col items-center gap-2 mt-1">
                         {tileHints.slice(0, shownCount).map((h, i) => (
-                          <span key={i} className="text-xs text-[var(--color-ink-faint)] text-center">
+                          <span key={i} className="text-base sm:text-lg text-[var(--color-ink-faint)] text-center">
                             💡 {h}
                           </span>
                         ))}
                         {shownCount < tileHints.length && (
                           <button
                             type="button"
-                            className="btn btn-ghost !py-1 !px-3 text-xs mt-1"
+                            className="btn btn-ghost !py-1.5 !px-4 text-sm sm:text-base mt-1"
                             onClick={() => setRevealedHints(shownCount + 1)}
                           >
                             الهنت التالي ▶
@@ -541,21 +546,26 @@ export default function Board() {
                   })()}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
                 {board.teams.map((team) => (
-                  <button key={team.id} className="btn btn-primary" style={{ background: team.color }} onClick={() => markAnswer(team.id)}>
+                  <button
+                    key={team.id}
+                    className="btn btn-primary text-lg sm:text-xl !py-3.5"
+                    style={{ background: team.color }}
+                    onClick={() => markAnswer(team.id)}
+                  >
                     ✔ {team.name} جاوب صح
                   </button>
                 ))}
               </div>
-              <button className="btn btn-ghost w-full mb-2" onClick={() => markAnswer(null)}>
+              <button className="btn btn-ghost w-full mb-2 text-base sm:text-lg !py-3 shrink-0" onClick={() => markAnswer(null)}>
                 لا أحد جاوب / اللي بعده
               </button>
-              <button className="text-xs text-[var(--color-ink-faint)] w-full text-center" onClick={() => setVarOpen((v) => !v)}>
+              <button className="text-sm sm:text-base text-[var(--color-ink-faint)] w-full text-center shrink-0" onClick={() => setVarOpen((v) => !v)}>
                 🚩 ساعدنا في تعديل الخطأ (VAR)
               </button>
               {varOpen && (
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex gap-2 shrink-0">
                   <input className="input" placeholder="اكتب الخطأ ليتم تعديله" value={varNote} onChange={(e) => setVarNote(e.target.value)} />
                   <button className="btn btn-primary !px-4" onClick={submitVar}>
                     ارسل
