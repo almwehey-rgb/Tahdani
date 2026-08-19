@@ -526,16 +526,16 @@ export default function Board() {
                   (() => {
                     const shownCount = Math.max(revealedHints, 1);
                     return (
-                      <div className="w-full flex flex-col items-center gap-2 mt-1">
+                      <div className="w-full flex flex-col items-center gap-3 mt-1">
                         {tileHints.slice(0, shownCount).map((h, i) => (
-                          <span key={i} className="text-base sm:text-lg text-[var(--color-ink-faint)] text-center">
+                          <span key={i} className="text-xl sm:text-2xl md:text-3xl font-semibold leading-snug text-[var(--color-ink-dim)] text-center">
                             💡 {h}
                           </span>
                         ))}
                         {shownCount < tileHints.length && (
                           <button
                             type="button"
-                            className="btn btn-ghost !py-1.5 !px-4 text-sm sm:text-base mt-1"
+                            className="btn btn-ghost !py-2 !px-5 text-base sm:text-lg mt-1"
                             onClick={() => setRevealedHints(shownCount + 1)}
                           >
                             الهنت التالي ▶
