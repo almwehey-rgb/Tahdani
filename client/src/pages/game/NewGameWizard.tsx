@@ -37,6 +37,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
+  const [categorySearch, setCategorySearch] = useState('');
 
   const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
@@ -296,11 +297,19 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
               رجوع
             </button>
           </div>
+          <input
+            className="input mb-4"
+            placeholder="🔍 ابحث عن فئة..."
+            value={categorySearch}
+            onChange={(e) => setCategorySearch(e.target.value)}
+          />
           {loadingCats ? (
             <Spinner />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {categories.map((c) => {
+              {categories
+                .filter((c) => c.name.includes(categorySearch.trim()))
+                .map((c) => {
                 const selected = selectedCategories.includes(c.id);
                 return (
                   <button key={c.id} onClick={() => toggleCategory(c.id)} className="text-right transition-all">
