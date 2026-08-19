@@ -303,33 +303,54 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
               {categories.map((c) => {
                 const selected = selectedCategories.includes(c.id);
                 return (
-                  <button key={c.id} onClick={() => toggleCategory(c.id)} className="text-center transition-all">
+                  <button key={c.id} onClick={() => toggleCategory(c.id)} className="text-right transition-all">
                     <div
-                      className="relative rounded-2xl overflow-hidden aspect-square border-2"
+                      className="relative rounded-2xl overflow-hidden aspect-[4/5] border-2 flex flex-col"
                       style={{
-                        background: `linear-gradient(160deg, ${c.color}44, ${c.color}18)`,
-                        borderColor: selected ? c.color : `${c.color}33`,
+                        background: `linear-gradient(160deg, ${c.color}33, ${c.color}11)`,
+                        borderColor: selected ? c.color : 'var(--color-border)',
                       }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center text-4xl">{c.icon}</div>
-                      {c.imageUrl && (
-                        <img
-                          src={c.imageUrl}
-                          alt=""
-                          className="absolute inset-0 w-full h-full object-contain p-3"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast(`${c.icon} ${c.name} — ${c._count?.questions ?? 0} سؤال`);
+                        }}
+                        className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/45 backdrop-blur-sm text-white text-xs font-bold flex items-center justify-center"
+                      >
+                        i
+                      </span>
                       {selected && (
-                        <div className="absolute inset-0 flex items-center justify-center text-3xl" style={{ background: `${c.color}55` }}>
+                        <span
+                          className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm text-white"
+                          style={{ background: c.color }}
+                        >
                           ✔
-                        </div>
+                        </span>
                       )}
+                      <div className="flex-1 relative flex items-center justify-center text-4xl">
+                        {c.icon}
+                        {c.imageUrl && (
+                          <img
+                            src={c.imageUrl}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-contain p-3"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div
+                        className="px-2 py-1.5 text-center text-xs font-bold text-white truncate"
+                        style={{ background: c.color }}
+                      >
+                        {c.name}
+                        {c.type === 'SEASONAL' && <span className="text-[var(--color-gold-hi,#ffdb85)]"> · موسمية</span>}
+                      </div>
                     </div>
-                    <div className="text-sm font-bold mt-1.5">{c.name}</div>
-                    {c.type === 'SEASONAL' && <div className="text-[10px] text-[var(--color-gold)] mt-0.5">موسمية</div>}
                   </button>
                 );
               })}
