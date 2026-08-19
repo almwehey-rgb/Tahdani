@@ -23,7 +23,9 @@ export default function AdminLayout() {
             to={t.to}
             end={t.end}
             className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-semibold ${isActive ? 'bg-[var(--color-surface-hi)] text-white' : 'text-[var(--color-ink-dim)] hover:text-white'}`
+              `px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                isActive ? 'bg-[var(--color-surface-hi)] text-[var(--color-ink)]' : 'text-[var(--color-ink-dim)] hover:text-[var(--color-ink)]'
+              }`
             }
           >
             {t.label}

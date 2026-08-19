@@ -344,13 +344,22 @@ export default function Board() {
           {board.teams.map((team, idx) => (
             <div
               key={team.id}
-              className="card p-4 flex flex-col items-center justify-center text-center gap-3 flex-1"
-              style={{ borderColor: idx === activeTeamIndex ? team.color : 'var(--color-border)', borderWidth: idx === activeTeamIndex ? 2 : 1 }}
+              className="card p-4 flex flex-col items-center justify-center text-center gap-3 flex-1 transition-all"
+              style={
+                idx === activeTeamIndex
+                  ? {
+                      borderColor: team.color,
+                      borderWidth: 3,
+                      background: `linear-gradient(160deg, ${team.color}2E, ${team.color}0D)`,
+                      boxShadow: `0 0 0 4px ${team.color}26, 0 12px 28px -10px ${team.color}66`,
+                    }
+                  : { borderColor: 'var(--color-border)', borderWidth: 1 }
+              }
             >
               <p className="text-2xl sm:text-3xl font-extrabold" style={{ color: team.color }}>
                 {team.name}
               </p>
-              {idx === activeTeamIndex && <span className="text-sm">🎯 دورهم</span>}
+              {idx === activeTeamIndex && <span className="text-sm font-bold" style={{ color: team.color }}>🎯 دورهم</span>}
               <div className="flex items-center justify-center gap-3">
                 <button
                   className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
@@ -401,7 +410,7 @@ export default function Board() {
               key={tile.gameQuestionId}
               title={tile.answeredByTeamId ? 'اضغط للتراجع عن الإجابة وإعادة فتح السؤال' : undefined}
               onClick={() => openQuestion(tile)}
-              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-white/5 relative ${
+              className={`flex-1 min-w-0 min-h-0 flex items-center justify-center px-0.5 font-extrabold text-sm sm:text-xl md:text-3xl whitespace-nowrap transition-colors hover:bg-black/5 relative ${
                 isLast ? '' : 'border-b'
               }`}
               style={{
