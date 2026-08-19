@@ -297,6 +297,15 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
               رجوع
             </button>
           </div>
+          {selectedCategories.length === requiredCategoryCount && (
+            <button
+              className="btn btn-primary w-full mb-4 sticky top-20 z-10 animate-pop"
+              onClick={mode === 'CLASSIC' ? goLifelines : () => createGame(selectedCategories, {})}
+              disabled={creating}
+            >
+              {creating ? 'جاري الإنشاء...' : mode === 'CLASSIC' ? 'متابعة: وسائل المساعدة ←' : 'متابعة: ابدأ اللعب ←'}
+            </button>
+          )}
           <input
             className="input mb-4"
             placeholder="🔍 ابحث عن فئة..."
