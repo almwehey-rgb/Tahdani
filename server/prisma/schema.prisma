@@ -118,6 +118,8 @@ model Question {
   answer     String
   hint       String?
   hint2      String?
+  hint3      String?
+  hint4      String?
   imageUrl   String? // shown instead of/alongside text, e.g. a flag to identify
   points     Int      @default(200) // 100/200/300 tiers
   isDrawing  Boolean  @default(false)

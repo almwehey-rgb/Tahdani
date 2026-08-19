@@ -122,7 +122,17 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
     answeredByTeamId: gq.answeredByTeamId,
     isCorrect: gq.isCorrect,
     usedVar: gq.usedVar,
-    ...(gq.isOpened ? { text: gq.question.text, hint: gq.question.hint, hint2: gq.question.hint2, answer: gq.question.answer, imageUrl: gq.question.imageUrl } : {}),
+    ...(gq.isOpened
+      ? {
+          text: gq.question.text,
+          hint: gq.question.hint,
+          hint2: gq.question.hint2,
+          hint3: gq.question.hint3,
+          hint4: gq.question.hint4,
+          answer: gq.question.answer,
+          imageUrl: gq.question.imageUrl,
+        }
+      : {}),
   }));
 
   res.json({
@@ -148,6 +158,8 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
       text: gq.question.text,
       hint: gq.question.hint,
       hint2: gq.question.hint2,
+      hint3: gq.question.hint3,
+      hint4: gq.question.hint4,
       answer: gq.question.answer,
       imageUrl: gq.question.imageUrl,
       points: gq.question.points,

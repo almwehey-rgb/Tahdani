@@ -5,6 +5,7 @@ import type { Category, Question } from '../../api/types';
 import Spinner from '../../components/Spinner';
 
 const TYPES: Category['type'][] = ['PERMANENT', 'SEASONAL', 'KIDS', 'DRAWING', 'STUDENT'];
+const HINT_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -13,8 +14,8 @@ export default function AdminCategories() {
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const [newCat, setNewCat] = useState({ name: '', icon: '🎯', color: '#6C4CE0', type: 'PERMANENT' as Category['type'] });
-  const [newQ, setNewQ] = useState({ text: '', answer: '', hint: '', hint2: '', points: 200, isDrawing: false });
-  const [showHint2, setShowHint2] = useState(false);
+  const [newQ, setNewQ] = useState({ text: '', answer: '', hint: '', hint2: '', hint3: '', hint4: '', points: 200, isDrawing: false });
+  const [visibleHints, setVisibleHints] = useState(1);
 
   async function loadCategories() {
     setLoading(true);
@@ -58,9 +59,15 @@ export default function AdminCategories() {
   async function addQuestion(categoryId: string) {
     if (newQ.text.trim().length < 2 || newQ.answer.trim().length < 1) return toast.error('يرجى تصحيح الأخطاء');
     try {
-      await api.post(`/categories/${categoryId}/questions`, { ...newQ, hint: newQ.hint || undefined, hint2: newQ.hint2 || undefined });
-      setNewQ({ text: '', answer: '', hint: '', hint2: '', points: 200, isDrawing: false });
-      setShowHint2(false);
+      await api.post(`/categories/${categoryId}/questions`, {
+        ...newQ,
+        hint: newQ.hint || undefined,
+        hint2: newQ.hint2 || undefined,
+        hint3: newQ.hint3 || undefined,
+        hint4: newQ.hint4 || undefined,
+      });
+      setNewQ({ text: '', answer: '', hint: '', hint2: '', hint3: '', hint4: '', points: 200, isDrawing: false });
+      setVisibleHints(1);
       const { data } = await api.get(`/categories/${categoryId}/questions`);
       setQuestions(data.questions);
       loadCategories();
@@ -141,18 +148,21 @@ export default function AdminCategories() {
                 <div className="grid sm:grid-cols-2 gap-2 mb-2">
                   <input className="input" placeholder="نص السؤال" value={newQ.text} onChange={(e) => setNewQ({ ...newQ, text: e.target.value })} />
                   <input className="input" placeholder="الإجابة" value={newQ.answer} onChange={(e) => setNewQ({ ...newQ, answer: e.target.value })} />
-                  <input className="input" placeholder="تلميح (اختياري)" value={newQ.hint} onChange={(e) => setNewQ({ ...newQ, hint: e.target.value })} />
-                  {showHint2 ? (
-                    <input
-                      className="input"
-                      placeholder="التلميح الثاني (اختياري)"
-                      value={newQ.hint2}
-                      onChange={(e) => setNewQ({ ...newQ, hint2: e.target.value })}
-                    />
-                  ) : (
-                    <button type="button" className="btn btn-ghost text-sm" onClick={() => setShowHint2(true)}>
-                      + إضافة الهنت الثاني
-                    </button>
+                  <input className="input" placeholder="التلميح الأول (اختياري)" value={newQ.hint} onChange={(e) => setNewQ({ ...newQ, hint: e.target.value })} />
+                  {(['hint2', 'hint3', 'hint4'] as const).map((key, i) =>
+                    visibleHints > i + 1 ? (
+                      <input
+                        key={key}
+                        className="input"
+                        placeholder={`التلميح ${HINT_ORDINALS[i + 1]} (اختياري)`}
+                        value={newQ[key]}
+                        onChange={(e) => setNewQ({ ...newQ, [key]: e.target.value })}
+                      />
+                    ) : visibleHints === i + 1 ? (
+                      <button key={key} type="button" className="btn btn-ghost text-sm" onClick={() => setVisibleHints(i + 2)}>
+                        + إضافة الهنت {HINT_ORDINALS[i + 1]}
+                      </button>
+                    ) : null
                   )}
                   <select className="input" value={newQ.points} onChange={(e) => setNewQ({ ...newQ, points: Number(e.target.value) })}>
                     <option value={200}>200</option>

@@ -16,6 +16,7 @@ export default function Board() {
   const [turn, setTurn] = useState(0);
   const [openTile, setOpenTile] = useState<GameTile | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [revealedHints, setRevealedHints] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [phase, setPhase] = useState<'main' | 'steal'>('main');
   const [phoneOverlay, setPhoneOverlay] = useState<number | null>(null);
@@ -114,6 +115,10 @@ export default function Board() {
   const activeTeamIndex = trapTargetIndex ?? turn;
   const activeTeam = board?.teams[activeTeamIndex];
 
+  const tileHints = openTile
+    ? [openTile.hint, openTile.hint2, openTile.hint3, openTile.hint4].filter((h): h is string => !!h)
+    : [];
+
   const answeredCount = board?.tiles.filter((t) => t.answeredByTeamId).length ?? 0;
   const totalTiles = board?.tiles.length ?? 0;
   const allAnswered = totalTiles > 0 && answeredCount === totalTiles;
@@ -124,6 +129,7 @@ export default function Board() {
     setTrapTargetIndex(null);
     setDoublePointsActive(false);
     setShowAnswer(false);
+    setRevealedHints(0);
     if (tile.isOpened && tile.text) {
       setOpenTile(tile);
       return;
@@ -489,13 +495,32 @@ export default function Board() {
                     {LIFELINE_LABELS[l.type].icon} {LIFELINE_LABELS[l.type].label}
                   </button>
                 ))}
-              {openTile.hint && (
-                <span className="text-xs text-[var(--color-ink-faint)] w-full text-center mt-1">
-                  {activeTeam.lifelines.some((l) => l.type === 'MORE_HINT' && l.used)
-                    ? [openTile.hint, openTile.hint2].filter(Boolean).map((h) => `💡 ${h}`).join('  ')
-                    : '💡 استخدم "وضحلي أكثر" لعرض التلميح'}
-                </span>
-              )}
+              {tileHints.length > 0 &&
+                (activeTeam.lifelines.some((l) => l.type === 'MORE_HINT' && l.used) ? (
+                  (() => {
+                    const shownCount = Math.max(revealedHints, 1);
+                    return (
+                      <div className="w-full flex flex-col items-center gap-1 mt-1">
+                        {tileHints.slice(0, shownCount).map((h, i) => (
+                          <span key={i} className="text-xs text-[var(--color-ink-faint)] text-center">
+                            💡 {h}
+                          </span>
+                        ))}
+                        {shownCount < tileHints.length && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost !py-1 !px-3 text-xs mt-1"
+                            onClick={() => setRevealedHints(shownCount + 1)}
+                          >
+                            الهنت التالي ▶
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <span className="text-xs text-[var(--color-ink-faint)] w-full text-center mt-1">💡 استخدم "وضحلي أكثر" لعرض التلميح</span>
+                ))}
             </div>
 
             <div className="grid grid-cols-2 gap-2 mb-2">
