@@ -180,7 +180,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-extrabold mb-1">{mode === 'KIDS' ? 'واجهة الأطفال' : 'إعداد لعبة جديدة'}</h1>
       <div className="flex items-center gap-2 mb-6 text-sm text-[var(--color-ink-dim)]">
         <StepDot active={step === 'teams'} label="الفرق" />
@@ -306,7 +306,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
           {loadingCats ? (
             <Spinner />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {categories
                 .filter((c) => c.name.includes(categorySearch.trim()))
                 .map((c) => {
