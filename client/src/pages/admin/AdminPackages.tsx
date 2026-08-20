@@ -7,7 +7,7 @@ import Spinner from '../../components/Spinner';
 export default function AdminPackages() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ name: '', gamesCount: 1, price: 1, currency: 'BHD', sortOrder: 0 });
+  const [form, setForm] = useState({ name: '', gamesCount: 1, price: 1, currency: 'KWD', sortOrder: 0 });
 
   async function load() {
     const { data } = await api.get('/packages');
@@ -23,7 +23,7 @@ export default function AdminPackages() {
     if (form.name.trim().length < 2) return toast.error('اسم الباقة مطلوب');
     try {
       await api.post('/packages', form);
-      setForm({ name: '', gamesCount: 1, price: 1, currency: 'BHD', sortOrder: 0 });
+      setForm({ name: '', gamesCount: 1, price: 1, currency: 'KWD', sortOrder: 0 });
       load();
     } catch (err) {
       toast.error(apiErrorMessage(err));

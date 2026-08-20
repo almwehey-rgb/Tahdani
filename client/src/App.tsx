@@ -26,6 +26,7 @@ import TournamentDetail from './pages/tournaments/TournamentDetail';
 
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminGames from './pages/admin/AdminGames';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminPackages from './pages/admin/AdminPackages';
 import AdminDiscounts from './pages/admin/AdminDiscounts';
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="games" element={<AdminGames />} />
             <Route path="packages" element={<AdminPackages />} />
             <Route path="discounts" element={<AdminDiscounts />} />
             <Route path="purchases" element={<AdminPurchases />} />

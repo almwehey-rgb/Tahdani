@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 const tabs = [
   { to: '/admin', label: 'الملخص', end: true },
   { to: '/admin/categories', label: 'الفئات والأسئلة' },
+  { to: '/admin/games', label: 'الألعاب' },
   { to: '/admin/packages', label: 'الباقات' },
   { to: '/admin/discounts', label: 'أكواد الخصم' },
   { to: '/admin/purchases', label: 'المدفوعات' },

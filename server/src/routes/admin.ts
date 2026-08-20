@@ -69,4 +69,66 @@ router.put('/access-code', async (req, res) => {
   res.json({ accessCode: setting.accessCode });
 });
 
+// Every game created in the app, not just the admin's own — this is the view
+// for clearing out test games and old runs.
+router.get('/games', async (req, res) => {
+  const take = Math.min(Number(req.query.take) || 100, 500);
+  const games = await prisma.game.findMany({
+    orderBy: { createdAt: 'desc' },
+    take,
+    include: {
+      user: { select: { name: true } },
+      teams: { orderBy: { id: 'asc' }, select: { id: true, name: true, color: true, score: true } },
+      _count: { select: { gameCategories: true } },
+    },
+  });
+  const total = await prisma.game.count();
+  res.json({
+    total,
+    games: games.map((g) => ({
+      id: g.id,
+      mode: g.mode,
+      status: g.status,
+      createdAt: g.createdAt,
+      winnerTeamId: g.winnerTeamId,
+      isTie: g.isTie,
+      userName: g.user.name,
+      teams: g.teams,
+      categoryCount: g._count.gameCategories,
+    })),
+  });
+});
+
+// Nothing in the schema cascades, so children go first, and GameQuestion has
+// to precede Team because it points at the answering team.
+async function deleteGamesDeep(gameIds: string[]) {
+  if (gameIds.length === 0) return;
+  const teams = await prisma.team.findMany({ where: { gameId: { in: gameIds } }, select: { id: true } });
+  const teamIds = teams.map((t) => t.id);
+  await prisma.$transaction([
+    prisma.player.deleteMany({ where: { teamId: { in: teamIds } } }),
+    prisma.teamLifeline.deleteMany({ where: { teamId: { in: teamIds } } }),
+    prisma.gameQuestion.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.gameCategory.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.varReport.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.team.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.game.deleteMany({ where: { id: { in: gameIds } } }),
+  ]);
+}
+
+// Wipes every finished game in the app. Active ones are left alone so a game
+// someone is playing right now doesn't disappear mid-round.
+router.delete('/games/finished', async (_req, res) => {
+  const games = await prisma.game.findMany({ where: { status: 'FINISHED' }, select: { id: true } });
+  await deleteGamesDeep(games.map((g) => g.id));
+  res.json({ ok: true, deleted: games.length });
+});
+
+router.delete('/games/:id', async (req, res) => {
+  const game = await prisma.game.findUnique({ where: { id: req.params.id } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+  await deleteGamesDeep([game.id]);
+  res.json({ ok: true });
+});
+
 export default router;
