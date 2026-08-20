@@ -14,7 +14,19 @@ export default function AdminCategories() {
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const [newCat, setNewCat] = useState({ name: '', icon: '🎯', color: '#6C4CE0', type: 'PERMANENT' as Category['type'] });
-  const [newQ, setNewQ] = useState({ text: '', answer: '', hint: '', hint2: '', hint3: '', hint4: '', points: 200, isDrawing: false });
+  const [newQ, setNewQ] = useState({
+    text: '',
+    answer: '',
+    hint: '',
+    hint2: '',
+    hint3: '',
+    hint4: '',
+    imageUrl: '',
+    videoUrl: '',
+    grayscale: false,
+    points: 200,
+    isDrawing: false,
+  });
   const [visibleHints, setVisibleHints] = useState(1);
 
   async function loadCategories() {
@@ -65,8 +77,22 @@ export default function AdminCategories() {
         hint2: newQ.hint2 || undefined,
         hint3: newQ.hint3 || undefined,
         hint4: newQ.hint4 || undefined,
+        imageUrl: newQ.imageUrl || undefined,
+        videoUrl: newQ.videoUrl || undefined,
       });
-      setNewQ({ text: '', answer: '', hint: '', hint2: '', hint3: '', hint4: '', points: 200, isDrawing: false });
+      setNewQ({
+        text: '',
+        answer: '',
+        hint: '',
+        hint2: '',
+        hint3: '',
+        hint4: '',
+        imageUrl: '',
+        videoUrl: '',
+        grayscale: false,
+        points: 200,
+        isDrawing: false,
+      });
       setVisibleHints(1);
       const { data } = await api.get(`/categories/${categoryId}/questions`);
       setQuestions(data.questions);
@@ -178,6 +204,26 @@ export default function AdminCategories() {
                       </button>
                     ) : null
                   )}
+                  <input
+                    className="input"
+                    placeholder="رابط صورة (اختياري)"
+                    value={newQ.imageUrl}
+                    onChange={(e) => setNewQ({ ...newQ, imageUrl: e.target.value })}
+                  />
+                  <input
+                    className="input"
+                    placeholder="رابط فيديو (اختياري)"
+                    value={newQ.videoUrl}
+                    onChange={(e) => setNewQ({ ...newQ, videoUrl: e.target.value })}
+                  />
+                  <label className="flex items-center gap-2 text-sm px-1">
+                    <input
+                      type="checkbox"
+                      checked={newQ.grayscale}
+                      onChange={(e) => setNewQ({ ...newQ, grayscale: e.target.checked })}
+                    />
+                    أبيض وأسود (يخفي ألوان الفانيلة)
+                  </label>
                   <select className="input" value={newQ.points} onChange={(e) => setNewQ({ ...newQ, points: Number(e.target.value) })}>
                     <option value={200}>200</option>
                     <option value={400}>400</option>
