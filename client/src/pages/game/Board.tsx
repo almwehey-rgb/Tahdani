@@ -52,7 +52,7 @@ function youTubeEmbedUrl(raw: string): string | null {
 // colors" flag also pushes the contrast hard: the pitch blows out to white and
 // the kits collapse to flat black or white, leaving the action legible but the
 // team unidentifiable.
-const HIDE_COLORS_FILTER = 'grayscale(1) brightness(1.1) contrast(4.5)';
+const HIDE_COLORS_FILTER = 'grayscale(1) brightness(1.25) contrast(10)';
 
 export default function Board() {
   const { id } = useParams<{ id: string }>();
@@ -71,6 +71,9 @@ export default function Board() {
   const [pickedPlayer, setPickedPlayer] = useState<string | null>(null);
   const [trapTargetIndex, setTrapTargetIndex] = useState<number | null>(null);
   const [doublePointsActive, setDoublePointsActive] = useState(false);
+  // Extra teams the host ruled correct on the current question, alongside
+  // whichever team they finally tap to score it.
+  const [sharedCorrectTeamIds, setSharedCorrectTeamIds] = useState<string[]>([]);
   const [headerHeight, setHeaderHeight] = useState(72);
   const setFinishGameHandler = useGameUiStore((s) => s.setFinishGameHandler);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -222,6 +225,11 @@ export default function Board() {
     const points = openTile.points;
     const resolvedTeamId = teamId ?? activeTeam!.id;
     const isCorrect = !!teamId;
+    // Teams the host also ticked as correct on this question — they each take
+    // the same points, and undo takes them back off all of them.
+    const alsoCorrectTeamIds = isCorrect ? sharedCorrectTeamIds.filter((tid) => tid !== resolvedTeamId) : [];
+    const scoringTeamIds = isCorrect ? [resolvedTeamId, ...alsoCorrectTeamIds] : [];
+    setSharedCorrectTeamIds([]);
     const previousTeams = board.teams;
     const previousTiles = board.tiles;
     const previousTurn = turn;
@@ -234,7 +242,11 @@ export default function Board() {
     setBoard({
       ...board,
       teams: isCorrect
-        ? board.teams.map((t) => (t.id === resolvedTeamId ? { ...t, score: t.score + (wasDoubleActive ? points * 2 : points) } : t))
+        ? board.teams.map((t) =>
+            scoringTeamIds.includes(t.id)
+              ? { ...t, score: t.score + (wasDoubleActive && t.id === resolvedTeamId ? points * 2 : points) }
+              : t,
+          )
         : board.teams,
       tiles: board.tiles.map((t) => (t.gameQuestionId === gqId ? { ...t, answeredByTeamId: resolvedTeamId, isCorrect } : t)),
     });
@@ -243,7 +255,7 @@ export default function Board() {
     setTurn((t) => (t + 1) % board.teams.length);
 
     try {
-      const { data } = await api.post(`/games/${id}/questions/${gqId}/answer`, { teamId: resolvedTeamId, isCorrect });
+      const { data } = await api.post(`/games/${id}/questions/${gqId}/answer`, { teamId: resolvedTeamId, isCorrect, alsoCorrectTeamIds });
       // Merge in just the score — trusting the response's team shape
       // wholesale has broken this screen before (a route that returned
       // teams without players/lifelines silently wiped both everywhere
@@ -381,6 +393,22 @@ export default function Board() {
 
   if (loading || !board) return <Spinner />;
 
+  // The team column is a fixed slice of the screen, so extra teams have to be
+  // paid for by shrinking each card rather than by pushing the column past the
+  // fold. Everything inside a card steps down together as teams are added.
+  const teamCardScale = (() => {
+    const n = board.teams.length;
+    if (n <= 2)
+      return { card: 'p-4 gap-3', name: 'text-2xl sm:text-3xl', score: 'text-5xl sm:text-6xl', stepper: 'w-10 h-10 text-xl', lifeline: 'text-2xl sm:text-3xl', gap: 'gap-3', showTurnLabel: true };
+    if (n === 3)
+      return { card: 'p-3 gap-2', name: 'text-xl sm:text-2xl', score: 'text-4xl sm:text-5xl', stepper: 'w-9 h-9 text-lg', lifeline: 'text-xl sm:text-2xl', gap: 'gap-2.5', showTurnLabel: true };
+    if (n === 4)
+      return { card: 'p-2.5 gap-1.5', name: 'text-lg sm:text-xl', score: 'text-3xl sm:text-4xl', stepper: 'w-8 h-8 text-base', lifeline: 'text-lg sm:text-xl', gap: 'gap-2', showTurnLabel: true };
+    if (n <= 6)
+      return { card: 'p-2 gap-1', name: 'text-base sm:text-lg', score: 'text-2xl sm:text-3xl', stepper: 'w-7 h-7 text-sm', lifeline: 'text-base', gap: 'gap-1.5', showTurnLabel: false };
+    return { card: 'p-1.5 gap-0.5', name: 'text-sm', score: 'text-xl sm:text-2xl', stepper: 'w-6 h-6 text-xs', lifeline: 'text-sm', gap: 'gap-1', showTurnLabel: false };
+  })();
+
   const categoriesWithTiles = board.categories.map((cat) => ({
     category: cat,
     tiles: board.tiles.filter((t) => t.categoryId === cat.id).sort((a, b) => a.points - b.points),
@@ -396,11 +424,11 @@ export default function Board() {
       </p>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 min-h-0">
-        <div className="lg:w-64 xl:w-72 shrink-0 flex flex-col gap-3">
+        <div className="lg:w-64 xl:w-72 shrink-0 flex flex-col gap-2 min-h-0">
           {board.teams.map((team, idx) => (
             <div
               key={team.id}
-              className="card p-4 flex flex-col items-center justify-center text-center gap-3 flex-1 transition-all"
+              className={`card flex flex-col items-center justify-center text-center flex-1 min-h-0 overflow-hidden transition-all ${teamCardScale.card}`}
               style={
                 idx === activeTeamIndex
                   ? {
@@ -412,22 +440,24 @@ export default function Board() {
                   : { borderColor: 'var(--color-border)', borderWidth: 1 }
               }
             >
-              <p className="text-2xl sm:text-3xl font-extrabold" style={{ color: team.color }}>
+              <p className={`${teamCardScale.name} font-extrabold leading-tight line-clamp-1`} style={{ color: team.color }}>
                 {team.name}
               </p>
-              {idx === activeTeamIndex && <span className="text-sm font-bold" style={{ color: team.color }}>🎯 دورهم</span>}
-              <div className="flex items-center justify-center gap-3">
+              {idx === activeTeamIndex && teamCardScale.showTurnLabel && (
+                <span className="text-xs font-bold" style={{ color: team.color }}>🎯 دورهم</span>
+              )}
+              <div className={`flex items-center justify-center ${teamCardScale.gap}`}>
                 <button
-                  className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
+                  className={`${teamCardScale.stepper} rounded-full font-black flex items-center justify-center leading-none shrink-0`}
                   style={{ background: `${team.color}33`, color: team.color }}
                   onClick={() => adjustScore(team.id, -50)}
                   title="اخصم نقاط"
                 >
                   −
                 </button>
-                <p className="text-5xl sm:text-6xl font-black">{team.score}</p>
+                <p className={`${teamCardScale.score} font-black leading-none`}>{team.score}</p>
                 <button
-                  className="w-10 h-10 rounded-full text-xl font-black flex items-center justify-center leading-none"
+                  className={`${teamCardScale.stepper} rounded-full font-black flex items-center justify-center leading-none shrink-0`}
                   style={{ background: `${team.color}33`, color: team.color }}
                   onClick={() => adjustScore(team.id, 50)}
                   title="أضف نقاط"
@@ -435,12 +465,12 @@ export default function Board() {
                   +
                 </button>
               </div>
-              <div className="flex gap-2.5 flex-wrap justify-center">
+              <div className="flex gap-1.5 flex-wrap justify-center">
                 {team.lifelines.map((l) => (
                   <span
                     key={l.id}
                     title={LIFELINE_LABELS[l.type].label}
-                    className={`text-2xl sm:text-3xl ${l.used ? 'opacity-25 grayscale' : ''}`}
+                    className={`${teamCardScale.lifeline} ${l.used ? 'opacity-25 grayscale' : ''}`}
                   >
                     {LIFELINE_LABELS[l.type].icon}
                   </span>
@@ -641,6 +671,36 @@ export default function Board() {
                   })()}
               </div>
 
+              {/* With more than two teams an answer can legitimately be right
+                  for several of them, so the host can tick the extras first
+                  and then tap whichever team scores it. */}
+              {board.teams.length > 2 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-2 shrink-0">
+                  <span className="text-sm text-[var(--color-ink-faint)]">جاوبوا صح معهم:</span>
+                  {board.teams.map((team) => {
+                    const picked = sharedCorrectTeamIds.includes(team.id);
+                    return (
+                      <button
+                        key={team.id}
+                        className="px-3 py-1.5 rounded-full text-sm font-bold border-2 transition-colors"
+                        style={{
+                          borderColor: team.color,
+                          background: picked ? team.color : 'transparent',
+                          color: picked ? '#fff' : team.color,
+                        }}
+                        onClick={() =>
+                          setSharedCorrectTeamIds((prev) =>
+                            prev.includes(team.id) ? prev.filter((t) => t !== team.id) : [...prev, team.id],
+                          )
+                        }
+                      >
+                        {picked ? '✔ ' : '+ '}
+                        {team.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
                 {board.teams.map((team) => (
                   <button
