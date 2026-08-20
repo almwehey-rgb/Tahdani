@@ -1,0 +1,262 @@
+[
+  {
+    "file": "Attack_on_Titan.md",
+    "dbCategoryName": "Attack on Titan",
+    "format": "qa"
+  },
+  {
+    "file": "Call_of_Duty.md",
+    "dbCategoryName": "Call of Duty",
+    "format": "qa"
+  },
+  {
+    "file": "Formula_1.md",
+    "dbCategoryName": "Formula 1",
+    "format": "qa"
+  },
+  {
+    "file": "Game_Of_Thrones.md",
+    "dbCategoryName": "Game Of Thrones",
+    "format": "qa"
+  },
+  {
+    "file": "Minecraft.md",
+    "dbCategoryName": "Minecraft",
+    "format": "qa"
+  },
+  {
+    "file": "Naruto.md",
+    "dbCategoryName": "Naruto",
+    "format": "qa"
+  },
+  {
+    "file": "One_Piece.md",
+    "dbCategoryName": "One Piece",
+    "format": "qa"
+  },
+  {
+    "file": "أعلام.md",
+    "dbCategoryName": "أعلام",
+    "format": "flags"
+  },
+  {
+    "file": "أغاني_أجنبية.md",
+    "dbCategoryName": "أغاني أجنبية",
+    "format": "qa"
+  },
+  {
+    "file": "أغاني_الزمن_الجميل.md",
+    "dbCategoryName": "أغاني الزمن الجميل",
+    "format": "qa"
+  },
+  {
+    "file": "أغاني_عربية_ولا_كلمة.md",
+    "dbCategoryName": "أغاني عربية / ولا كلمة",
+    "format": "word"
+  },
+  {
+    "file": "أغاني_وطنية.md",
+    "dbCategoryName": "أغاني وطنية",
+    "format": "qa"
+  },
+  {
+    "file": "أفلام_رعب.md",
+    "dbCategoryName": "أفلام رعب",
+    "format": "qa"
+  },
+  {
+    "file": "أفلام_كلاسيك.md",
+    "dbCategoryName": "أفلام كلاسيك",
+    "format": "qa"
+  },
+  {
+    "file": "ألغاز.md",
+    "dbCategoryName": "ألغاز",
+    "format": "qa"
+  },
+  {
+    "file": "أم_كلثوم.md",
+    "dbCategoryName": "أم كلثوم",
+    "format": "qa"
+  },
+  {
+    "file": "أمثال_وغطاوي.md",
+    "dbCategoryName": "أمثال وغطاوي",
+    "format": "qa"
+  },
+  {
+    "file": "الجزء_المفقود.md",
+    "dbCategoryName": "الجزء المفقود",
+    "format": "qa"
+  },
+  {
+    "file": "العاب_الطفولة.md",
+    "dbCategoryName": "العاب الطفولة",
+    "format": "qa"
+  },
+  {
+    "file": "الفنون_القتالية.md",
+    "dbCategoryName": "الفنون القتالية",
+    "format": "qa"
+  },
+  {
+    "file": "القرآن_الكريم.md",
+    "dbCategoryName": "القرآن الكريم",
+    "format": "qa"
+  },
+  {
+    "file": "باب_الحارة.md",
+    "dbCategoryName": "باب الحارة",
+    "format": "qa"
+  },
+  {
+    "file": "برشلونة.md",
+    "dbCategoryName": "برشلونة",
+    "format": "qa"
+  },
+  {
+    "file": "تشكيلات.md",
+    "dbCategoryName": "تشكيلات",
+    "format": "qa"
+  },
+  {
+    "file": "تنس.md",
+    "dbCategoryName": "تنس",
+    "format": "qa"
+  },
+  {
+    "file": "توقعني_دول.md",
+    "dbCategoryName": "توقعني (دول)",
+    "format": "qa"
+  },
+  {
+    "file": "حيوانات_ولا_كلمة.md",
+    "dbCategoryName": "حيوانات / ولا كلمة",
+    "format": "word"
+  },
+  {
+    "file": "خمن_الصورة.md",
+    "dbCategoryName": "خمن الصورة",
+    "format": "qa"
+  },
+  {
+    "file": "دول_ولا_كلمة.md",
+    "dbCategoryName": "دول / ولا كلمة",
+    "format": "word"
+  },
+  {
+    "file": "ريال_مدريد.md",
+    "dbCategoryName": "ريال مدريد",
+    "format": "qa"
+  },
+  {
+    "file": "شنو_هذا.md",
+    "dbCategoryName": "شنو هذا؟",
+    "format": "qa"
+  },
+  {
+    "file": "طاش_ماطاش.md",
+    "dbCategoryName": "طاش ماطاش",
+    "format": "qa"
+  },
+  {
+    "file": "عبدالكريم_عبدالقادر.md",
+    "dbCategoryName": "عبدالكريم عبدالقادر",
+    "format": "qa"
+  },
+  {
+    "file": "عملات.md",
+    "dbCategoryName": "عملات",
+    "format": "qa"
+  },
+  {
+    "file": "عواصم.md",
+    "dbCategoryName": "عواصم",
+    "format": "qa"
+  },
+  {
+    "file": "كأس_العالم.md",
+    "dbCategoryName": "كأس العالم",
+    "format": "qa"
+  },
+  {
+    "file": "كرة_قدم_ايطالية.md",
+    "dbCategoryName": "كرة قدم ايطالية",
+    "format": "qa"
+  },
+  {
+    "file": "كرة_قدم_عالمية.md",
+    "dbCategoryName": "كرة قدم عالمية",
+    "format": "qa"
+  },
+  {
+    "file": "كرتون_ولا_كلمة.md",
+    "dbCategoryName": "كرتون / ولا كلمة",
+    "format": "word"
+  },
+  {
+    "file": "كونان.md",
+    "dbCategoryName": "كونان",
+    "format": "qa"
+  },
+  {
+    "file": "لعبة_PUBG.md",
+    "dbCategoryName": "لعبة PUBG",
+    "format": "qa"
+  },
+  {
+    "file": "مشاهير_عرب_ولا_كلمة.md",
+    "dbCategoryName": "مشاهير عرب / ولا كلمة",
+    "format": "word"
+  },
+  {
+    "file": "من_أنا_حيوانات.md",
+    "dbCategoryName": "من أنا / حيوانات",
+    "format": "qa"
+  },
+  {
+    "file": "من_أنا_دول.md",
+    "dbCategoryName": "من أنا / دول",
+    "format": "qa"
+  },
+  {
+    "file": "من_أنا_لاعبين_كرة_قدم.md",
+    "dbCategoryName": "من أنا / لاعبين كرة قدم",
+    "format": "qa"
+  },
+  {
+    "file": "من_أنا_مسلسلات_عربيه.md",
+    "dbCategoryName": "من أنا / مسلسلات عربيه",
+    "format": "qa"
+  },
+  {
+    "file": "من_أنا_ممثلين.md",
+    "dbCategoryName": "من أنا / ممثلين",
+    "format": "qa"
+  },
+  {
+    "file": "من_هو_اللاعب.md",
+    "dbCategoryName": "من هو اللاعب",
+    "format": "qa"
+  },
+  {
+    "file": "منو_المشهور.md",
+    "dbCategoryName": "منو المشهور",
+    "format": "qa"
+  },
+  {
+    "file": "منوعات_شعرية.md",
+    "dbCategoryName": "منوعات شعرية",
+    "format": "qa"
+  },
+  {
+    "file": "منوعات_كرة_قدم.md",
+    "dbCategoryName": "منوعات كرة قدم",
+    "format": "qa"
+  },
+  {
+    "file": "ميسي_وكرستيانو.md",
+    "dbCategoryName": "ميسي وكرستيانو",
+    "format": "qa"
+  }
+]
