@@ -9,7 +9,9 @@ router.get('/', async (req, res) => {
   const type = typeof req.query.type === 'string' ? req.query.type : undefined;
   const categories = await prisma.category.findMany({
     where: { active: true, ...(type ? { type } : {}) },
-    orderBy: { createdAt: 'asc' },
+    // Categories that actually carry questions lead the list; the many empty
+    // placeholders fall to the bottom instead of burying the playable ones.
+    orderBy: [{ questions: { _count: 'desc' } }, { createdAt: 'asc' }],
     include: { _count: { select: { questions: true } } },
   });
   res.json({ categories });
