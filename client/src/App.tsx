@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Packages from './pages/Packages';
 import Gifts from './pages/Gifts';
 import Account from './pages/Account';
+import History from './pages/History';
 import Episodes from './pages/Episodes';
 import TvApply from './pages/TvApply';
 import PaymentCallback from './pages/PaymentCallback';
@@ -47,6 +48,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="account" element={<Account />} />
+          <Route path="history" element={<History />} />
           <Route path="gifts" element={<Gifts />} />
           <Route path="payment/callback" element={<PaymentCallback />} />
 

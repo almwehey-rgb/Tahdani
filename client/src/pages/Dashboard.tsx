@@ -55,6 +55,10 @@ export default function Dashboard() {
         <ActionCard to="/gifts" icon="🎁" title="الهدايا" desc="أهدِ لعبة أو استلم هدية" />
         <ActionCard to="/tournaments" icon="🏆" title="البطولات" desc="أنشئ بطولة بين عدة فرق" />
       </div>
+
+      <div className="grid sm:grid-cols-3 gap-4 mt-4">
+        <ActionCard to="/history" icon="📜" title="سجل الألعاب" desc="شوف ألعابك السابقة واحذف اللي ما تبيه" />
+      </div>
     </div>
   );
 }

@@ -363,6 +363,66 @@ router.post('/:id/tiebreak', requireAuth, async (req: AuthedRequest, res) => {
   res.json({ game: updated, winner });
 });
 
+// Past games, newest first, with just enough detail to recognise one in a list.
+router.get('/history', requireAuth, async (req: AuthedRequest, res) => {
+  const games = await prisma.game.findMany({
+    where: { userId: req.userId, status: 'FINISHED' },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      teams: { orderBy: { id: 'asc' }, select: { id: true, name: true, color: true, score: true } },
+      gameCategories: { include: { category: { select: { name: true } } } },
+    },
+  });
+  res.json({
+    games: games.map((g) => ({
+      id: g.id,
+      mode: g.mode,
+      createdAt: g.createdAt,
+      finishedAt: g.finishedAt,
+      winnerTeamId: g.winnerTeamId,
+      isTie: g.isTie,
+      teams: g.teams,
+      categories: g.gameCategories.map((gc) => gc.category.name),
+    })),
+  });
+});
+
+// Nothing in the schema cascades, so a game's children have to go first, and
+// GameQuestion has to go before Team because it points at the answering team.
+async function deleteGamesDeep(gameIds: string[]) {
+  if (gameIds.length === 0) return;
+  const teams = await prisma.team.findMany({ where: { gameId: { in: gameIds } }, select: { id: true } });
+  const teamIds = teams.map((t) => t.id);
+  await prisma.$transaction([
+    prisma.player.deleteMany({ where: { teamId: { in: teamIds } } }),
+    prisma.teamLifeline.deleteMany({ where: { teamId: { in: teamIds } } }),
+    prisma.gameQuestion.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.gameCategory.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.varReport.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.team.deleteMany({ where: { gameId: { in: gameIds } } }),
+    prisma.game.deleteMany({ where: { id: { in: gameIds } } }),
+  ]);
+}
+
+// Clears the whole history at once. Only finished games — an active game is
+// still being played and would vanish out from under the host.
+router.delete('/history', requireAuth, async (req: AuthedRequest, res) => {
+  const games = await prisma.game.findMany({
+    where: { userId: req.userId, status: 'FINISHED' },
+    select: { id: true },
+  });
+  await deleteGamesDeep(games.map((g) => g.id));
+  res.json({ ok: true, deleted: games.length });
+});
+
+router.delete('/:id', requireAuth, async (req: AuthedRequest, res) => {
+  const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+  if (game.status === 'ACTIVE') return res.status(400).json({ error: 'لا يمكن حذف لعبة نشطة، أنهها أولاً' });
+  await deleteGamesDeep([game.id]);
+  res.json({ ok: true });
+});
+
 router.post('/:id/abandon', requireAuth, async (req: AuthedRequest, res) => {
   const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
   if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
