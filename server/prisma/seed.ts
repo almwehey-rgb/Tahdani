@@ -1806,10 +1806,10 @@ async function main() {
       category = await prisma.category.create({
         data: { name: c.name, icon: c.icon, color: c.color, imageUrl: c.imageUrl, type: c.type || 'PERMANENT' },
       });
-    } else if (c.imageUrl && category.imageUrl !== c.imageUrl) {
-      // Backfills the cover image on categories seeded before imageUrl existed.
-      category = await prisma.category.update({ where: { id: category.id }, data: { imageUrl: c.imageUrl } });
     }
+    // Cover images on existing categories are managed from the admin panel —
+    // the seed only supplies one at creation time. Re-applying it on every
+    // deploy would wipe whatever the admin has since chosen (or cleared).
     for (const q of [...c.questions, ...extrasFor(c.name)]) {
       // Drawing questions all share the same instruction text (only the
       // answer differs per word), so text alone — or even text+points,
@@ -1877,8 +1877,6 @@ async function main() {
     ramadan = await prisma.category.create({
       data: { name: 'رمضانيات', icon: '🌙', color: '#6C4CE0', imageUrl: ramadanImageUrl, type: 'SEASONAL', seasonTag: 'RAMADAN_2026' },
     });
-  } else if (ramadan.imageUrl !== ramadanImageUrl) {
-    ramadan = await prisma.category.update({ where: { id: ramadan.id }, data: { imageUrl: ramadanImageUrl } });
   }
   const ramadanQuestions: Q[] = [
     { text: 'ما هو اسم الوجبة التي يتناولها الصائم قبل الفجر؟', answer: 'السحور', points: 200 },
@@ -1897,8 +1895,6 @@ async function main() {
     kids = await prisma.category.create({
       data: { name: 'عالم الأطفال', icon: '🧸', color: '#3FC6FF', imageUrl: kidsImageUrl, type: 'KIDS' },
     });
-  } else if (kids.imageUrl !== kidsImageUrl) {
-    kids = await prisma.category.update({ where: { id: kids.id }, data: { imageUrl: kidsImageUrl } });
   }
   const kidsQuestions: Q[] = [
     { text: 'كم عدد أيام الأسبوع؟', answer: '7 أيام', points: 200 },
