@@ -30,27 +30,30 @@
 
 /* Old dark palette, opt-in via the header's theme toggle (persisted to
    localStorage as "tahdani-theme"). Light is the default now. */
+/* Warm charcoal and cream, sampled off the category artwork so the cards sit
+   on the page instead of fighting it: the gutters between those tiles measure
+   #292826 and the tile faces run #FBE39A-#FFEAA2 over a #EEB33F gold. */
 [data-theme='dark'] {
-  --color-bg: #0f1024;
-  --color-bg-soft: #171a3a;
-  --color-surface: #1e2148;
-  --color-surface-hi: #262a5c;
-  --color-border: #34397a;
+  --color-bg: #1a1917;
+  --color-bg-soft: #232220;
+  --color-surface: #292826;
+  --color-surface-hi: #34322e;
+  --color-border: #45423c;
 
-  --color-brand-hi: #9b82ff;
-  --color-gold-hi: #ffdb85;
+  --color-brand-hi: #f0b93c;
+  --color-gold-hi: #ffeaa2;
 
-  --color-ink: #f3f2ff;
-  --color-ink-dim: #b7b6de;
-  --color-ink-faint: #7f7db0;
+  --color-ink: #fbe39a;
+  --color-ink-dim: #c9b98c;
+  --color-ink-faint: #948a7c;
 
-  --color-success: #34d399;
-  --color-danger: #ff5c72;
-  --color-team-a: #ff7a4d;
-  --color-team-b: #3fc6ff;
+  --color-success: #86c96f;
+  --color-danger: #ef6f5e;
+  --color-team-a: #ee9a3f;
+  --color-team-b: #6cb8c9;
 
-  --color-header-bg: rgba(15, 16, 36, 0.85);
-  --color-tile-hover: rgba(255, 255, 255, 0.05);
+  --color-header-bg: rgba(26, 25, 23, 0.88);
+  --color-tile-hover: rgba(252, 230, 159, 0.07);
 }
 
 html, body, #root {
@@ -65,7 +68,7 @@ body {
 }
 
 [data-theme='dark'] body {
-  background: radial-gradient(circle at 20% -10%, #2a1f66 0%, var(--color-bg) 45%) fixed;
+  background: radial-gradient(circle at 20% -10%, #33302a 0%, var(--color-bg) 45%) fixed;
 }
 
 * {

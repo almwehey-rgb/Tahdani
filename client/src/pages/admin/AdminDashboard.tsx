@@ -45,7 +45,7 @@ export default function AdminDashboard() {
     { label: 'المستخدمون', value: summary.users, icon: '👤' },
     { label: 'الألعاب المُنشأة', value: summary.games, icon: '🎮' },
     { label: 'عمليات الشراء', value: summary.purchases, icon: '💳' },
-    { label: 'الإيرادات (BHD)', value: summary.revenue.toFixed(3), icon: '💰' },
+    { label: 'الإيرادات (د.ك)', value: summary.revenue.toFixed(3), icon: '💰' },
     { label: 'البطولات', value: summary.tournaments, icon: '🏆' },
     { label: 'طلبات تلفزيون قيد الانتظار', value: summary.pendingTvApplications, icon: '📺' },
     { label: 'بلاغات VAR مفتوحة', value: summary.openVarReports, icon: '🚩' },

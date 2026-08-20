@@ -49,7 +49,7 @@ async function main() {
   ];
   for (const p of packages) {
     const existing = await prisma.package.findFirst({ where: { name: p.name } });
-    if (!existing) await prisma.package.create({ data: { ...p, currency: 'BHD' } });
+    if (!existing) await prisma.package.create({ data: { ...p, currency: 'KWD' } });
   }
 
   // ---------- Discount codes ----------

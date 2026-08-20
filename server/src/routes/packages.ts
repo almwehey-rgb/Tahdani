@@ -14,7 +14,7 @@ const schema = z.object({
   name: z.string().min(2),
   gamesCount: z.number().int().min(1),
   price: z.number().min(0),
-  currency: z.string().default('BHD'),
+  currency: z.string().default('KWD'),
   active: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
 });
