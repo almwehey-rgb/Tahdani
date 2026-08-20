@@ -204,6 +204,10 @@ model GameQuestion {
   answeredByTeamId String?
   answeredByTeam Team?     @relation(fields: [answeredByTeamId], references: [id])
   isCorrect      Boolean?
+  // With more than two teams the host can rule the answer correct for several
+  // of them at once; these are the extra teams that also scored, kept here so
+  // undo can take the points back off every one of them.
+  alsoCorrectTeamIds String[] @default([])
   isOpened       Boolean   @default(false)
   usedVar        Boolean   @default(false)
 }

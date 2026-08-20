@@ -21,6 +21,25 @@ function emptyTeam(name: string, color: string): WizardTeam {
 
 const SELECTABLE_LIFELINE_TYPES: LifelineType[] = ['PHONE_A_FRIEND', 'STEAL_POINTS', 'DOUBLE_POINTS'];
 
+// Browsing 500+ categories through one search box is hopeless, so the picker
+// also offers quick groups. Each is matched against the category name; a
+// category can appear under more than one, and chips with no matches are
+// hidden, so this stays correct as categories are added.
+const CATEGORY_GROUPS: { label: string; match: RegExp }[] = [
+  { label: 'فيها أسئلة', match: /(?:)/ }, // handled specially below
+  { label: 'كرة قدم', match: /كرة|الكرة|دوري|كأس|مونديال|لاعب|هدف|مدرب|نادي|منتخب|FUT|أندية/ },
+  { label: 'فن وأغاني', match: /أغاني|اغاني|أغنية|فنان|فن |مسرحي|طرب/ },
+  { label: 'مسلسلات وأفلام', match: /مسلسل|فيلم|أفلام|سينما|بوسترات|دراما/ },
+  { label: 'من أنا؟', match: /من أنا|من انا/ },
+  { label: 'ولا كلمة', match: /ولا كلمة/ },
+  { label: 'إي لا', match: /إي لا|إي لأ|اي لا|إي أو لأ/ },
+  { label: 'حروف', match: /حروف/ },
+  { label: 'دول وجغرافيا', match: /جغرافيا|دول|عاصمة|أعلام|خرائط|معالم|السعودية|الكويت|الأردن|قطر|مصر/ },
+  { label: 'إسلامي', match: /قرآن|إسلامي|اسلامي|أنبياء|دين|جزء عم|نشيد|أذان/ },
+  { label: 'ألعاب', match: /ألعاب|العاب|لعبة|أنمي|انمي/ },
+  { label: 'صور ومقاطع', match: /صورة|صور |لقطة|مقاطع|شعارات|إيموجي|ايموجي/ },
+];
+
 const TEAM_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
 const TEAM_NAME_DEFAULTS = ['الفريق الأول', 'الفريق الثاني', 'الفريق الثالث', 'الفريق الرابع'];
 const MAX_TEAMS = 4;
@@ -38,6 +57,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [categorySearch, setCategorySearch] = useState('');
+  const [activeGroup, setActiveGroup] = useState('الكل');
 
   const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
@@ -160,6 +180,28 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
       setCreating(false);
     }
   }
+
+  function matchesGroup(c: Category, label: string) {
+    if (label === 'الكل') return true;
+    if (label === 'فيها أسئلة') return (c._count?.questions ?? 0) > 0;
+    const group = CATEGORY_GROUPS.find((g) => g.label === label);
+    return group ? group.match.test(c.name) : true;
+  }
+
+  // Only offer a chip when it actually leads somewhere.
+  const groupChips = useMemo(() => {
+    const chips = [{ label: 'الكل', count: categories.length }];
+    for (const g of CATEGORY_GROUPS) {
+      const count = categories.filter((c) => matchesGroup(c, g.label)).length;
+      if (count > 0) chips.push({ label: g.label, count });
+    }
+    return chips;
+  }, [categories]);
+
+  const visibleCategories = useMemo(() => {
+    const q = categorySearch.trim();
+    return categories.filter((c) => c.name.includes(q) && matchesGroup(c, activeGroup));
+  }, [categories, categorySearch, activeGroup]);
 
   const readyForClassicSubmit = useMemo(
     () => teams.every((t) => (lifelines[teams.indexOf(t)] || []).length === 3),
@@ -309,18 +351,35 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
             </button>
           </div>
           <input
-            className="input mb-4"
+            className="input mb-3"
             placeholder="🔍 ابحث عن فئة..."
             value={categorySearch}
             onChange={(e) => setCategorySearch(e.target.value)}
           />
+          <div className="flex flex-wrap gap-2 mb-4">
+            {groupChips.map((chip) => {
+              const active = activeGroup === chip.label;
+              return (
+                <button
+                  key={chip.label}
+                  onClick={() => setActiveGroup(chip.label)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-bold border transition-colors ${
+                    active
+                      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                      : 'border-[var(--color-border)] text-[var(--color-ink-dim)] hover:border-[var(--color-primary)]'
+                  }`}
+                >
+                  {chip.label}
+                  <span className={`mr-1.5 text-xs ${active ? 'opacity-80' : 'opacity-60'}`}>{chip.count}</span>
+                </button>
+              );
+            })}
+          </div>
           {loadingCats ? (
             <Spinner />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {categories
-                .filter((c) => c.name.includes(categorySearch.trim()))
-                .map((c) => {
+              {visibleCategories.map((c) => {
                 const selected = selectedCategories.includes(c.id);
                 return (
                   <button key={c.id} onClick={() => toggleCategory(c.id)} className="text-right transition-all">

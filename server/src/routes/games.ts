@@ -172,7 +172,12 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
   });
 });
 
-const answerSchema = z.object({ teamId: z.string(), isCorrect: z.boolean() });
+const answerSchema = z.object({
+  teamId: z.string(),
+  isCorrect: z.boolean(),
+  // Extra teams the host also ruled correct on the same question.
+  alsoCorrectTeamIds: z.array(z.string()).default([]),
+});
 
 router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedRequest, res) => {
   const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
@@ -184,10 +189,22 @@ router.post('/:id/questions/:gqId/answer', requireAuth, async (req: AuthedReques
   const gq = await prisma.gameQuestion.findUnique({ where: { id: req.params.gqId }, include: { question: true } });
   if (!gq) return res.status(404).json({ error: 'السؤال غير موجود' });
 
+  // Only teams in this game, never the main team twice, and only when the
+  // answer was actually ruled correct.
+  const gameTeamIds = new Set((await prisma.team.findMany({ where: { gameId: game.id }, select: { id: true } })).map((t) => t.id));
+  const alsoCorrectTeamIds = isCorrect
+    ? [...new Set(parsed.data.alsoCorrectTeamIds)].filter((tid) => tid !== teamId && gameTeamIds.has(tid))
+    : [];
+
   await prisma.$transaction([
-    prisma.gameQuestion.update({ where: { id: gq.id }, data: { answeredByTeamId: teamId, isCorrect } }),
+    prisma.gameQuestion.update({ where: { id: gq.id }, data: { answeredByTeamId: teamId, isCorrect, alsoCorrectTeamIds } }),
     ...(isCorrect
-      ? [prisma.team.update({ where: { id: teamId }, data: { score: { increment: gq.question.points } } })]
+      ? [
+          prisma.team.update({ where: { id: teamId }, data: { score: { increment: gq.question.points } } }),
+          ...alsoCorrectTeamIds.map((tid) =>
+            prisma.team.update({ where: { id: tid }, data: { score: { increment: gq.question.points } } }),
+          ),
+        ]
       : []),
   ]);
 
@@ -207,9 +224,15 @@ router.post('/:id/questions/:gqId/undo', requireAuth, async (req: AuthedRequest,
   if (!gq.answeredByTeamId) return res.status(400).json({ error: 'هذا السؤال ما تم الإجابة عليه بعد' });
 
   await prisma.$transaction([
-    prisma.gameQuestion.update({ where: { id: gq.id }, data: { answeredByTeamId: null, isCorrect: null } }),
+    prisma.gameQuestion.update({ where: { id: gq.id }, data: { answeredByTeamId: null, isCorrect: null, alsoCorrectTeamIds: [] } }),
     ...(gq.isCorrect
-      ? [prisma.team.update({ where: { id: gq.answeredByTeamId }, data: { score: { decrement: gq.question.points } } })]
+      ? [
+          prisma.team.update({ where: { id: gq.answeredByTeamId }, data: { score: { decrement: gq.question.points } } }),
+          // Teams that shared the point on this question lose it too.
+          ...gq.alsoCorrectTeamIds.map((tid) =>
+            prisma.team.update({ where: { id: tid }, data: { score: { decrement: gq.question.points } } }),
+          ),
+        ]
       : []),
   ]);
 
