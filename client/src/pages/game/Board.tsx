@@ -8,6 +8,46 @@ import Spinner from '../../components/Spinner';
 import DrawingCanvas from './DrawingCanvas';
 import { useGameUiStore } from '../../store/gameUi';
 
+// Goal clips are rarely available as a plain .mp4, so a YouTube link has to
+// work too. Returns an embed URL when the link is YouTube, else null (and the
+// caller falls back to a <video> tag for direct files).
+function youTubeEmbedUrl(raw: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  const host = u.hostname.replace(/^www\./, '');
+  let id = '';
+  if (host === 'youtu.be') {
+    id = u.pathname.slice(1);
+  } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+    if (u.pathname === '/watch') id = u.searchParams.get('v') || '';
+    else if (u.pathname.startsWith('/shorts/')) id = u.pathname.slice('/shorts/'.length);
+    else if (u.pathname.startsWith('/embed/')) id = u.pathname.slice('/embed/'.length);
+  }
+  id = id.split('/')[0];
+  if (!/^[\w-]{6,}$/.test(id)) return null;
+
+  // A start offset lets the host skip the build-up and land on the goal.
+  const t = u.searchParams.get('t') || u.searchParams.get('start') || '';
+  const start = /^\d+/.exec(t)?.[0] || '';
+
+  const params = new URLSearchParams({
+    autoplay: '1',
+    // Commentary names the scorer, so the clip has to start silent.
+    mute: '1',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1',
+    loop: '1',
+    playlist: id,
+  });
+  if (start) params.set('start', start);
+  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
+}
+
 export default function Board() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -510,19 +550,44 @@ export default function Board() {
                         style={openTile.grayscale ? { filter: 'grayscale(1)' } : undefined}
                       />
                     )}
-                    {openTile.videoUrl && (
-                      <video
-                        key={openTile.videoUrl}
-                        src={openTile.videoUrl}
-                        controls
-                        playsInline
-                        loop
-                        autoPlay
-                        muted
-                        className="block mx-auto w-full max-w-3xl max-h-48 sm:max-h-64 md:max-h-80 rounded-lg border border-[var(--color-border)] mb-4 bg-black"
-                        style={openTile.grayscale ? { filter: 'grayscale(1)' } : undefined}
-                      />
-                    )}
+                    {openTile.videoUrl &&
+                      (() => {
+                        const embed = youTubeEmbedUrl(openTile.videoUrl);
+                        const filter = openTile.grayscale ? { filter: 'grayscale(1)' } : undefined;
+                        if (!embed) {
+                          return (
+                            <video
+                              key={openTile.videoUrl}
+                              src={openTile.videoUrl}
+                              controls
+                              playsInline
+                              loop
+                              autoPlay
+                              muted
+                              className="block mx-auto w-full max-w-3xl max-h-48 sm:max-h-64 md:max-h-80 rounded-lg border border-[var(--color-border)] mb-4 bg-black"
+                              style={filter}
+                            />
+                          );
+                        }
+                        return (
+                          <div
+                            className="relative mx-auto w-full max-w-3xl aspect-video rounded-lg overflow-hidden border border-[var(--color-border)] mb-4 bg-black"
+                            style={filter}
+                          >
+                            <iframe
+                              key={embed}
+                              src={embed}
+                              title=""
+                              className="absolute inset-0 w-full h-full"
+                              allow="autoplay; encrypted-media; picture-in-picture"
+                              allowFullScreen
+                            />
+                            {/* YouTube prints the clip's title across the top of
+                                the player, which would hand over the answer. */}
+                            <div className="absolute inset-x-0 top-0 h-14 bg-black" />
+                          </div>
+                        );
+                      })()}
                     {showAnswer && (
                       <p
                         className="text-center text-2xl sm:text-4xl font-extrabold p-4 rounded-lg mb-4"

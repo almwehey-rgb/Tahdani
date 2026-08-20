@@ -212,7 +212,7 @@ export default function AdminCategories() {
                   />
                   <input
                     className="input"
-                    placeholder="رابط فيديو (اختياري)"
+                    placeholder="رابط فيديو أو يوتيوب (اختياري)"
                     value={newQ.videoUrl}
                     onChange={(e) => setNewQ({ ...newQ, videoUrl: e.target.value })}
                   />
