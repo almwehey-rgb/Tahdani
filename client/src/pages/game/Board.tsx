@@ -48,6 +48,12 @@ function youTubeEmbedUrl(raw: string): string | null {
   return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
 }
 
+// Plain grayscale still leaves a kit readable by its shade, so the "hide the
+// colors" flag also pushes the contrast hard: the pitch blows out to white and
+// the kits collapse to flat black or white, leaving the action legible but the
+// team unidentifiable.
+const HIDE_COLORS_FILTER = 'grayscale(1) brightness(1.1) contrast(4.5)';
+
 export default function Board() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -547,13 +553,13 @@ export default function Board() {
                         src={openTile.imageUrl}
                         alt=""
                         className="block mx-auto max-h-40 sm:max-h-56 rounded-lg border border-[var(--color-border)] mb-4"
-                        style={openTile.grayscale ? { filter: 'grayscale(1)' } : undefined}
+                        style={openTile.grayscale ? { filter: HIDE_COLORS_FILTER } : undefined}
                       />
                     )}
                     {openTile.videoUrl &&
                       (() => {
                         const embed = youTubeEmbedUrl(openTile.videoUrl);
-                        const filter = openTile.grayscale ? { filter: 'grayscale(1)' } : undefined;
+                        const filter = openTile.grayscale ? { filter: HIDE_COLORS_FILTER } : undefined;
                         if (!embed) {
                           return (
                             <video
