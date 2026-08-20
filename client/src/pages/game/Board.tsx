@@ -507,6 +507,20 @@ export default function Board() {
                         src={openTile.imageUrl}
                         alt=""
                         className="block mx-auto max-h-40 sm:max-h-56 rounded-lg border border-[var(--color-border)] mb-4"
+                        style={openTile.grayscale ? { filter: 'grayscale(1)' } : undefined}
+                      />
+                    )}
+                    {openTile.videoUrl && (
+                      <video
+                        key={openTile.videoUrl}
+                        src={openTile.videoUrl}
+                        controls
+                        playsInline
+                        loop
+                        autoPlay
+                        muted
+                        className="block mx-auto w-full max-w-3xl max-h-48 sm:max-h-64 md:max-h-80 rounded-lg border border-[var(--color-border)] mb-4 bg-black"
+                        style={openTile.grayscale ? { filter: 'grayscale(1)' } : undefined}
                       />
                     )}
                     {showAnswer && (

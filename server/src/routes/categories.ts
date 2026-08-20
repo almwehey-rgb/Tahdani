@@ -58,6 +58,8 @@ const questionSchema = z.object({
   hint3: z.string().optional().nullable(),
   hint4: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
+  videoUrl: z.string().url().optional().nullable(),
+  grayscale: z.boolean().default(false),
   points: z.number().int().min(50).max(1000).default(200),
   isDrawing: z.boolean().default(false),
 });

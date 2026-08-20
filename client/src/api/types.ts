@@ -27,6 +27,9 @@ export interface Question {
   hint2?: string | null;
   hint3?: string | null;
   hint4?: string | null;
+  imageUrl?: string | null;
+  videoUrl?: string | null;
+  grayscale?: boolean;
   points: number;
   isDrawing: boolean;
 }
@@ -127,6 +130,8 @@ export interface GameTile {
   hint4?: string | null;
   answer?: string;
   imageUrl?: string | null;
+  videoUrl?: string | null;
+  grayscale?: boolean;
 }
 
 export interface Game {
