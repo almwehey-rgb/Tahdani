@@ -80,14 +80,38 @@ router.put('/questions/:qid', requireAuth, requireAdmin, async (req: AuthedReque
   res.json({ question });
 });
 
+// A question that has ever been dealt into a game is referenced by
+// GameQuestion (and possibly VarReport), and nothing here cascades — deleting
+// it straight off raises a foreign-key error that this handler used to leave
+// unanswered, hanging the request instead of failing it. Clear the children
+// first, in one transaction so a half-deleted question is never left behind.
 router.delete('/questions/:qid', requireAuth, requireAdmin, async (req, res) => {
-  await prisma.question.delete({ where: { id: req.params.qid } });
-  res.json({ ok: true });
+  const { qid } = req.params;
+  try {
+    await prisma.$transaction([
+      prisma.varReport.deleteMany({ where: { questionId: qid } }),
+      prisma.gameQuestion.deleteMany({ where: { questionId: qid } }),
+      prisma.question.delete({ where: { id: qid } }),
+    ]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: 'تعذر حذف السؤال' });
+  }
 });
 
 router.delete('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
-  const { count } = await prisma.question.deleteMany({ where: { categoryId: req.params.id } });
-  res.json({ ok: true, count });
+  const categoryId = req.params.id;
+  try {
+    const ids = (await prisma.question.findMany({ where: { categoryId }, select: { id: true } })).map((q) => q.id);
+    const [, , { count }] = await prisma.$transaction([
+      prisma.varReport.deleteMany({ where: { questionId: { in: ids } } }),
+      prisma.gameQuestion.deleteMany({ where: { questionId: { in: ids } } }),
+      prisma.question.deleteMany({ where: { categoryId } }),
+    ]);
+    res.json({ ok: true, count });
+  } catch (e) {
+    res.status(400).json({ error: 'تعذر حذف أسئلة الفئة' });
+  }
 });
 
 export default router;
