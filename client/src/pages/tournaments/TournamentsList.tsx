@@ -17,7 +17,7 @@ export default function TournamentsList() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold">البطولات</h1>
-          <p className="text-[var(--color-ink-dim)]">اصنع بطولتك وتحداهم، صار وقت التحدي مع تحدّني</p>
+          <p className="text-[var(--color-ink-dim)]">اصنع بطولتك وتحداهم، صار وقت التحدي مع «انت صح»</p>
         </div>
         <Link to="/tournaments/new" className="btn btn-gold">
           + بطولة جديدة

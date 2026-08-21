@@ -45,7 +45,7 @@ export default function TvApply() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
-      <h1 className="text-2xl font-extrabold mb-1">شارك في برنامج يا هلا تحدّني</h1>
+      <h1 className="text-2xl font-extrabold mb-1">شارك في برنامج يا هلا انت صح</h1>
       <p className="text-[var(--color-ink-dim)] mb-6">اصنع بطولتك وتحداهم، صار وقت التحدي على شاشة التلفزيون</p>
 
       <div className="card p-5 flex flex-col gap-4">

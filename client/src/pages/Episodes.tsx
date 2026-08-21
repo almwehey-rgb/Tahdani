@@ -13,7 +13,7 @@ export default function Episodes() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-extrabold mb-1">برنامج يا هلا تحدّني</h1>
+      <h1 className="text-2xl font-extrabold mb-1">برنامج يا هلا انت صح</h1>
       <p className="text-[var(--color-ink-dim)] mb-6">شارك في البرنامج التلفزيوني، وتابع حلقات الموسم</p>
 
       {loading ? (

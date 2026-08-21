@@ -106,7 +106,7 @@ export default function Layout() {
 
       {showFooter && (
         <footer className="border-t border-[var(--color-border)] py-6 text-center text-sm text-[var(--color-ink-faint)]">
-          تحدّني © {new Date().getFullYear()} — لعبة أسئلة وتحديات جماعية
+          انت صح © {new Date().getFullYear()} — لعبة أسئلة وتحديات جماعية
         </footer>
       )}
     </div>

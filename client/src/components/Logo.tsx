@@ -12,7 +12,7 @@ export default function Logo({ size = 32 }: { size?: number }) {
         <span style={{ fontSize: size * 0.55 }}>🏆</span>
       </span>
       <span>
-        تحدّ<span style={{ color: 'var(--color-gold)' }}>ني</span>
+        انت <span style={{ color: 'var(--color-gold)' }}>صح</span>
       </span>
     </span>
   );
