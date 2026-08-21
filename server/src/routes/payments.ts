@@ -68,7 +68,7 @@ router.post('/checkout', requireAuth, async (req: AuthedRequest, res) => {
       amount,
       currency: pkg.currency,
       customerName: user.name,
-      description: `${pkg.name} — تحدّني`,
+      description: `${pkg.name} — انت صح`,
       callbackUrl,
       errorUrl: callbackUrl,
       webhookUrl: process.env.SERVER_PUBLIC_URL ? `${process.env.SERVER_PUBLIC_URL}/api/payments/webhook/${gateway.name}` : undefined,
