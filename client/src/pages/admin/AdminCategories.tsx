@@ -13,7 +13,10 @@ export default function AdminCategories() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
 
-  const [newCat, setNewCat] = useState({ name: '', icon: '🎯', color: '#6C4CE0', type: 'PERMANENT' as Category['type'] });
+  const [newCat, setNewCat] = useState({ name: '', icon: '🎯', color: '#6C4CE0', imageUrl: '', type: 'PERMANENT' as Category['type'] });
+  // which category's cover is being edited, and the URL being typed for it
+  const [editingCover, setEditingCover] = useState<string | null>(null);
+  const [coverDraft, setCoverDraft] = useState('');
   const [newQ, setNewQ] = useState({
     text: '',
     answer: '',
@@ -53,8 +56,8 @@ export default function AdminCategories() {
   async function createCategory() {
     if (newCat.name.trim().length < 2) return toast.error('اسم الفئة مطلوب');
     try {
-      await api.post('/categories', newCat);
-      setNewCat({ name: '', icon: '🎯', color: '#6C4CE0', type: 'PERMANENT' });
+      await api.post('/categories', { ...newCat, imageUrl: newCat.imageUrl.trim() || undefined });
+      setNewCat({ name: '', icon: '🎯', color: '#6C4CE0', imageUrl: '', type: 'PERMANENT' });
       toast.success('تمت إضافة الفئة');
       loadCategories();
     } catch (err) {
@@ -62,10 +65,25 @@ export default function AdminCategories() {
     }
   }
 
-  async function deleteCategory(id: string) {
-    if (!window.confirm('هل أنت متأكد؟')) return;
-    await api.delete(`/categories/${id}`);
+  // Name the category and its question count: a bare "are you sure?" next to a
+  // category holding hundreds of questions is far too easy to click through.
+  async function deleteCategory(cat: Category) {
+    const count = cat._count?.questions ?? 0;
+    const warning = count > 0 ? `\n\nفيها ${count} سؤال وراح تختفي من اللعبة.` : '';
+    if (!window.confirm(`حذف فئة "${cat.name}"؟${warning}`)) return;
+    await api.delete(`/categories/${cat.id}`);
     loadCategories();
+  }
+
+  async function saveCover(cat: Category) {
+    try {
+      await api.put(`/categories/${cat.id}`, { imageUrl: coverDraft.trim() || null });
+      toast.success(coverDraft.trim() ? 'تم حفظ الصورة' : 'تمت إزالة الصورة');
+      setEditingCover(null);
+      loadCategories();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   async function addQuestion(categoryId: string) {
@@ -121,7 +139,7 @@ export default function AdminCategories() {
     <div className="flex flex-col gap-6">
       <div className="card p-5">
         <h2 className="font-bold mb-3">إضافة فئة جديدة</h2>
-        <div className="grid sm:grid-cols-5 gap-2 items-end">
+        <div className="grid sm:grid-cols-6 gap-2 items-end">
           <div className="sm:col-span-2">
             <label className="label">الاسم</label>
             <input className="input" value={newCat.name} onChange={(e) => setNewCat({ ...newCat, name: e.target.value })} />
@@ -140,25 +158,87 @@ export default function AdminCategories() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="label">رابط صورة الغلاف (اختياري)</label>
+            <input
+              className="input"
+              placeholder="https://..."
+              value={newCat.imageUrl}
+              onChange={(e) => setNewCat({ ...newCat, imageUrl: e.target.value })}
+            />
+          </div>
           <button className="btn btn-primary" onClick={createCategory}>
             إضافة
           </button>
         </div>
+        {newCat.imageUrl.trim() && (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-sm text-[var(--color-ink-dim)]">معاينة:</span>
+            <img
+              src={newCat.imageUrl.trim()}
+              alt=""
+              className="w-16 h-16 rounded-lg object-cover border border-[var(--color-border)]"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '0.25'; }}
+              onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = '1'; }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
         {categories.map((cat) => (
           <div key={cat.id} className="card p-4">
             <div className="flex items-center justify-between">
-              <button className="flex items-center gap-2 font-bold" onClick={() => toggleExpand(cat)}>
-                <span>{cat.icon}</span>
+              <button className="flex items-center gap-2 font-bold text-start" onClick={() => toggleExpand(cat)}>
+                {cat.imageUrl ? (
+                  <img src={cat.imageUrl} alt="" className="w-9 h-9 rounded-lg object-cover shrink-0 border border-[var(--color-border)]" />
+                ) : (
+                  <span className="w-9 h-9 rounded-lg shrink-0 grid place-items-center bg-[var(--color-bg-soft)] text-lg">{cat.icon}</span>
+                )}
                 <span>{cat.name}</span>
                 <span className="text-xs text-[var(--color-ink-faint)]">({cat._count?.questions ?? 0} أسئلة — {cat.type})</span>
               </button>
-              <button className="text-[var(--color-danger)] text-sm" onClick={() => deleteCategory(cat.id)}>
-                حذف
-              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  className="text-sm text-[var(--color-brand-hi)]"
+                  onClick={() => {
+                    setEditingCover(editingCover === cat.id ? null : cat.id);
+                    setCoverDraft(cat.imageUrl || '');
+                  }}
+                >
+                  {cat.imageUrl ? 'تغيير الصورة' : 'إضافة صورة'}
+                </button>
+                <button className="text-[var(--color-danger)] text-sm" onClick={() => deleteCategory(cat)}>
+                  حذف
+                </button>
+              </div>
             </div>
+
+            {editingCover === cat.id && (
+              <div className="mt-3 border-t border-[var(--color-border)] pt-3 flex flex-col sm:flex-row gap-3 sm:items-end">
+                <img
+                  src={coverDraft.trim() || undefined}
+                  alt=""
+                  className="w-20 h-20 rounded-lg object-cover border border-[var(--color-border)] bg-[var(--color-bg-soft)] shrink-0"
+                />
+                <div className="flex-1">
+                  <label className="label">رابط الصورة</label>
+                  <input
+                    className="input"
+                    placeholder="https://..."
+                    value={coverDraft}
+                    onChange={(e) => setCoverDraft(e.target.value)}
+                  />
+                  <p className="text-xs text-[var(--color-ink-faint)] mt-1">
+                    اتركه فارغاً لإزالة الصورة الحالية.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn btn-primary" onClick={() => saveCover(cat)}>حفظ</button>
+                  <button className="btn btn-ghost" onClick={() => setEditingCover(null)}>إلغاء</button>
+                </div>
+              </div>
+            )}
 
             {expanded === cat.id && (
               <div className="mt-4 border-t border-[var(--color-border)] pt-4">
