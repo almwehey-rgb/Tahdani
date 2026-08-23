@@ -58,6 +58,7 @@ export default function Dashboard() {
 
       <div className="grid sm:grid-cols-3 gap-4 mt-4">
         <ActionCard to="/history" icon="📜" title="سجل الألعاب" desc="شوف ألعابك السابقة واحذف اللي ما تبيه" />
+        <ActionCard to="/list" icon="🧠" title="السهل الممتنع" desc="سؤال واحد وله عدة إجابات مخفية، الصعبة نقاطها أعلى" />
       </div>
     </div>
   );
