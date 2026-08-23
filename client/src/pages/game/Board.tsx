@@ -61,6 +61,9 @@ export default function Board() {
   const [loading, setLoading] = useState(true);
   const [turn, setTurn] = useState(0);
   const [openTile, setOpenTile] = useState<GameTile | null>(null);
+  // The question picture blown up: on a map question the highlighted country
+  // can be a couple of pixels wide at the size it shows in the card.
+  const [zoomedImage, setZoomedImage] = useState<{ src: string; grayscale: boolean } | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [revealedHints, setRevealedHints] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
@@ -125,12 +128,21 @@ export default function Board() {
   // (especially the drawing canvas, which sets touch-action:none) and the
   // whole screen stops responding to taps until reload.
   useEffect(() => {
-    const shouldLock = !!openTile || phoneOverlay !== null;
+    const shouldLock = !!openTile || phoneOverlay !== null || !!zoomedImage;
     document.body.style.overflow = shouldLock ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [openTile, phoneOverlay]);
+  }, [openTile, phoneOverlay, zoomedImage]);
+
+  useEffect(() => {
+    if (!zoomedImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomedImage(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [zoomedImage]);
 
   useEffect(() => {
     if (!openTile) {
@@ -590,12 +602,22 @@ export default function Board() {
                   <div className="shrink-0 py-4">
                     <p className={`${questionTextClass} font-bold text-center leading-relaxed mb-4`}>{openTile.text}</p>
                     {openTile.imageUrl && (
-                      <img
-                        src={openTile.imageUrl}
-                        alt=""
-                        className="block mx-auto max-h-40 sm:max-h-56 rounded-lg border border-[var(--color-border)] mb-4"
-                        style={openTile.grayscale ? { filter: HIDE_COLORS_FILTER } : undefined}
-                      />
+                      <button
+                        type="button"
+                        title="اضغط لتكبير الصورة"
+                        onClick={() => setZoomedImage({ src: openTile.imageUrl!, grayscale: !!openTile.grayscale })}
+                        className="block mx-auto mb-4 relative group cursor-zoom-in"
+                      >
+                        <img
+                          src={openTile.imageUrl}
+                          alt=""
+                          className="block max-h-40 sm:max-h-56 rounded-lg border border-[var(--color-border)]"
+                          style={openTile.grayscale ? { filter: HIDE_COLORS_FILTER } : undefined}
+                        />
+                        <span className="absolute bottom-1 left-1 rounded-md bg-black/60 text-white text-xs px-1.5 py-0.5 pointer-events-none">
+                          🔍 تكبير
+                        </span>
+                      </button>
                     )}
                     {openTile.videoUrl &&
                       (() => {
@@ -743,6 +765,29 @@ export default function Board() {
         )}
         </div>
       </div>
+
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setZoomedImage(null)}
+        >
+          <img
+            src={zoomedImage.src}
+            alt=""
+            // Fill the screen rather than stop at the file's own size: the
+            // point of enlarging is to find a country a few pixels wide.
+            className="w-full h-full object-contain rounded-lg"
+            style={zoomedImage.grayscale ? { filter: HIDE_COLORS_FILTER } : undefined}
+          />
+          <button
+            type="button"
+            className="absolute top-4 left-4 rounded-full bg-white/15 text-white w-10 h-10 text-xl leading-none"
+            onClick={() => setZoomedImage(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {phoneOverlay !== null && (
         <div className="fixed inset-0 z-[60] bg-black/85 flex flex-col items-center justify-center gap-4">
