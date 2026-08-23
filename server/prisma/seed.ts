@@ -26,19 +26,31 @@ async function main() {
   await prisma.appSetting.upsert({
     where: { id: 'singleton' },
     update: {},
-    create: { id: 'singleton', accessCode: 'TAHDANI' },
+    create: { id: 'singleton', accessCode: '123123' },
   });
 
   // ---------- Admin ----------
   await prisma.user.upsert({
-    where: { name: 'مشرف تحدّني' },
+    where: { name: 'تركي' },
     update: { role: 'ADMIN' },
     create: {
-      name: 'مشرف تحدّني',
+      name: 'تركي',
       role: 'ADMIN',
       remainingGames: 999,
     },
   });
+
+  // Retire the account this seed used to create. Deleting it fails if it still
+  // owns games or purchases, so fall back to stripping its admin rights —
+  // leaving a second admin behind would defeat the point of replacing it.
+  const retiredAdmin = await prisma.user.findUnique({ where: { name: 'مشرف تحدّني' } });
+  if (retiredAdmin) {
+    try {
+      await prisma.user.delete({ where: { id: retiredAdmin.id } });
+    } catch {
+      await prisma.user.update({ where: { id: retiredAdmin.id }, data: { role: 'USER' } });
+    }
+  }
 
   // ---------- Packages ----------
   const packages = [
