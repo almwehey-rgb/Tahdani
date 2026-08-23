@@ -414,13 +414,6 @@ export default function Board() {
     tiles: board.tiles.filter((t) => t.categoryId === cat.id).sort((a, b) => a.points - b.points),
   }));
 
-  // One even veil over the whole cover: dimming only the two point columns
-  // would slice the picture into three visible bands.
-  const coverVeilStyle = {
-    background: 'color-mix(in srgb, var(--color-bg-soft) 55%, transparent)',
-  } as const;
-  // The numbers sit straight on the picture, so give them their own contrast.
-  const tilePointStyle = { textShadow: '0 1px 3px rgba(0,0,0,0.55)' } as const;
 
   const boardColumns = Math.min(categoriesWithTiles.length, 3);
   const boardRows = boardColumns > 0 ? Math.ceil(categoriesWithTiles.length / boardColumns) : 1;
@@ -515,10 +508,8 @@ export default function Board() {
                   : undefined,
               }}
             >
-              <span style={tilePointStyle}>
-                {tile.isDrawing && '🎨 '}
-                {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.points}
-              </span>
+              {tile.isDrawing && '🎨 '}
+              {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.points}
               {tile.usedVar && <span className="absolute top-1 left-1 text-xs">🚩</span>}
             </button>
           );
@@ -528,38 +519,37 @@ export default function Board() {
               className="rounded-2xl overflow-hidden min-w-0 h-full flex flex-col"
               style={{ border: `1px solid ${category.color}55` }}
             >
-              <div className="relative flex items-stretch flex-1 min-h-0" style={{ background: 'var(--color-bg-soft)' }}>
-                {/* The cover fills the whole tile; the point columns then sit on
-                    top of it behind a scrim so the numbers stay readable. */}
-                {category.imageUrl && (
-                  <img
-                    src={category.imageUrl}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                )}
-                {category.imageUrl && <div className="absolute inset-0" style={coverVeilStyle} />}
-                <div className="relative flex flex-col flex-1 min-w-0">
+              <div className="flex items-stretch flex-1 min-h-0" style={{ background: 'var(--color-bg-soft)' }}>
+                <div className="flex flex-col flex-1 min-w-0">
                   {leftTiles.map((tile, i) => renderTile(tile, i === leftTiles.length - 1))}
                 </div>
                 <div
-                  className="relative w-9 sm:w-24 md:w-40 shrink-0"
+                  className="relative w-9 sm:w-24 md:w-40 shrink-0 overflow-hidden"
                   style={
                     category.imageUrl
                       ? undefined
                       : { background: `linear-gradient(160deg, ${category.color}44, ${category.color}18)` }
                   }
                 >
-                  {!category.imageUrl && (
+                  {category.imageUrl ? (
+                    // Fills its strip edge to edge — no padding, no letterboxing.
+                    // It stops at the strip so the point numbers keep a plain
+                    // background to sit on.
+                    <img
+                      src={category.imageUrl}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-lg sm:text-4xl md:text-6xl">
                       {category.icon}
                     </div>
                   )}
                 </div>
-                <div className="relative flex flex-col flex-1 min-w-0">
+                <div className="flex flex-col flex-1 min-w-0">
                   {rightTiles.map((tile, i) => renderTile(tile, i === rightTiles.length - 1))}
                 </div>
               </div>
