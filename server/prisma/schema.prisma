@@ -129,6 +129,19 @@ model Question {
 
   gameQuestions GameQuestion[]
   varReports    VarReport[]
+  answers       QuestionAnswer[]
+}
+
+// One of several hidden answers to a single question, each carrying its own
+// score. Used by the list round ("السهل الممتنع"), where a team names as many
+// as it can before the clock runs out and the obvious ones are worth least.
+model QuestionAnswer {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  text       String
+  points     Int      @default(100)
+  sortOrder  Int      @default(0)
 }
 
 model VarReport {
@@ -147,7 +160,7 @@ model Game {
   id         String    @id @default(cuid())
   userId     String
   user       User      @relation(fields: [userId], references: [id])
-  mode       String    @default("CLASSIC") // CLASSIC | KIDS | STUDENT
+  mode       String    @default("CLASSIC") // CLASSIC | KIDS | STUDENT | LIST
   status     String    @default("ACTIVE") // ACTIVE | FINISHED
   winnerTeamId String?
   isTie      Boolean   @default(false)

@@ -32,6 +32,16 @@ export interface Question {
   grayscale?: boolean;
   points: number;
   isDrawing: boolean;
+  answers?: QuestionAnswer[];
+}
+
+// One of several hidden answers on a list question, each with its own score.
+export interface QuestionAnswer {
+  id: string;
+  questionId: string;
+  text: string;
+  points: number;
+  sortOrder: number;
 }
 
 export interface Package {

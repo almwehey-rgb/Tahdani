@@ -47,14 +47,27 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 router.get('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
-  const questions = await prisma.question.findMany({ where: { categoryId: req.params.id }, orderBy: { points: 'asc' } });
+  const questions = await prisma.question.findMany({
+    where: { categoryId: req.params.id },
+    orderBy: { points: 'asc' },
+    include: { answers: { orderBy: { sortOrder: 'asc' } } },
+  });
   res.json({ questions });
+});
+
+// A list question carries several hidden answers, each with its own score.
+const answerSchema = z.object({
+  text: z.string().min(1),
+  points: z.number().int().min(0).max(5000).default(100),
 });
 
 const questionSchema = z.object({
   categoryId: z.string(),
   text: z.string().min(2),
-  answer: z.string().min(1),
+  // Optional when `answers` is given: the single-answer field is then filled
+  // from the list so the existing board and history keep working.
+  answer: z.string().min(1).optional(),
+  answers: z.array(answerSchema).max(30).optional(),
   hint: z.string().optional().nullable(),
   hint2: z.string().optional().nullable(),
   hint3: z.string().optional().nullable(),
@@ -69,14 +82,45 @@ const questionSchema = z.object({
 router.post('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
   const parsed = questionSchema.safeParse({ ...req.body, categoryId: req.params.id });
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
-  const question = await prisma.question.create({ data: parsed.data });
+  const { answers, ...rest } = parsed.data;
+  const answer = rest.answer || (answers && answers.length ? answers.map((a) => a.text).join('، ') : '');
+  if (!answer) return res.status(400).json({ error: 'الإجابة مطلوبة' });
+  const question = await prisma.question.create({
+    data: {
+      ...rest,
+      answer,
+      ...(answers && answers.length
+        ? { answers: { create: answers.map((a, i) => ({ ...a, sortOrder: i })) } }
+        : {}),
+    },
+    include: { answers: { orderBy: { sortOrder: 'asc' } } },
+  });
   res.status(201).json({ question });
 });
 
 router.put('/questions/:qid', requireAuth, requireAdmin, async (req: AuthedRequest, res) => {
   const parsed = questionSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
-  const question = await prisma.question.update({ where: { id: req.params.qid }, data: parsed.data });
+  const { answers, ...rest } = parsed.data;
+  // Sending `answers` replaces the whole list — editing one row of a list of
+  // twenty by hand is not something the panel should have to orchestrate.
+  const question = await prisma.$transaction(async (tx) => {
+    if (answers) {
+      await tx.questionAnswer.deleteMany({ where: { questionId: req.params.qid } });
+      if (answers.length) {
+        await tx.questionAnswer.createMany({
+          data: answers.map((a, i) => ({ ...a, sortOrder: i, questionId: req.params.qid })),
+        });
+      }
+    }
+    const data = { ...rest };
+    if (answers && answers.length && !rest.answer) data.answer = answers.map((a) => a.text).join('، ');
+    return tx.question.update({
+      where: { id: req.params.qid },
+      data,
+      include: { answers: { orderBy: { sortOrder: 'asc' } } },
+    });
+  });
   res.json({ question });
 });
 
