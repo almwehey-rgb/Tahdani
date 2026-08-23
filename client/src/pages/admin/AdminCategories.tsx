@@ -33,6 +33,9 @@ export default function AdminCategories() {
     isDrawing: false,
   });
   const [visibleHints, setVisibleHints] = useState(1);
+  // Hidden answers for a list question ("السهل الممتنع"): each row is one
+  // answer with its own score. Left empty, the question stays a normal one.
+  const [listAnswers, setListAnswers] = useState<{ text: string; points: number }[]>([]);
 
   async function loadCategories() {
     setLoading(true);
@@ -102,7 +105,9 @@ export default function AdminCategories() {
   }
 
   async function addQuestion(categoryId: string) {
-    if (newQ.text.trim().length < 2 || newQ.answer.trim().length < 1) return toast.error('يرجى تصحيح الأخطاء');
+    const filled = listAnswers.filter((a) => a.text.trim());
+    if (newQ.text.trim().length < 2) return toast.error('نص السؤال مطلوب');
+    if (!newQ.answer.trim() && filled.length === 0) return toast.error('اكتب إجابة، أو أضف إجابات متعددة');
     try {
       await api.post(`/categories/${categoryId}/questions`, {
         ...newQ,
@@ -112,6 +117,7 @@ export default function AdminCategories() {
         hint4: newQ.hint4 || undefined,
         imageUrl: newQ.imageUrl || undefined,
         videoUrl: newQ.videoUrl || undefined,
+        answers: listAnswers.filter((a) => a.text.trim()).map((a) => ({ text: a.text.trim(), points: a.points })),
       });
       setNewQ({
         text: '',
@@ -127,6 +133,7 @@ export default function AdminCategories() {
         isDrawing: false,
       });
       setVisibleHints(1);
+      setListAnswers([]);
       const { data } = await api.get(`/categories/${categoryId}/questions`);
       setQuestions(data.questions);
       loadCategories();
@@ -297,9 +304,16 @@ export default function AdminCategories() {
                     <div key={q.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--color-bg-soft)]">
                       <div>
                         <p className="font-bold">{q.text}</p>
-                        <p className="text-[var(--color-ink-faint)]">
-                          الإجابة: {q.answer} — {q.points} نقطة
-                        </p>
+                        {q.answers && q.answers.length > 0 ? (
+                          <p className="text-[var(--color-ink-faint)]">
+                            {q.answers.length} إجابة مخفية:{' '}
+                            {q.answers.map((a) => `${a.text} (${a.points})`).join('، ')}
+                          </p>
+                        ) : (
+                          <p className="text-[var(--color-ink-faint)]">
+                            الإجابة: {q.answer} — {q.points} نقطة
+                          </p>
+                        )}
                       </div>
                       <button className="text-[var(--color-danger)]" onClick={() => deleteQuestion(q.id)}>
                         حذف
@@ -311,6 +325,62 @@ export default function AdminCategories() {
                 <div className="grid sm:grid-cols-2 gap-2 mb-2">
                   <input className="input" placeholder="نص السؤال" value={newQ.text} onChange={(e) => setNewQ({ ...newQ, text: e.target.value })} />
                   <input className="input" placeholder="الإجابة" value={newQ.answer} onChange={(e) => setNewQ({ ...newQ, answer: e.target.value })} />
+
+                  <div className="rounded-xl border border-[var(--color-border)] p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-sm">إجابات متعددة (السهل الممتنع)</span>
+                      <button
+                        type="button"
+                        className="text-sm text-[var(--color-brand-hi)]"
+                        onClick={() => setListAnswers((a) => [...a, { text: '', points: 100 }])}
+                      >
+                        + إضافة إجابة
+                      </button>
+                    </div>
+                    {listAnswers.length === 0 ? (
+                      <p className="text-xs text-[var(--color-ink-faint)]">
+                        اتركها فارغة لسؤال عادي بإجابة واحدة. أضف إجابات هنا ليصير السؤال من نوع «خمّن كل الإجابات» — كل إجابة بنقاطها.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {listAnswers.map((a, i) => (
+                          <div key={i} className="flex gap-2 items-center">
+                            <span className="text-xs text-[var(--color-ink-faint)] w-5 shrink-0">{i + 1}.</span>
+                            <input
+                              className="input flex-1"
+                              placeholder="الإجابة المخفية"
+                              value={a.text}
+                              onChange={(e) =>
+                                setListAnswers((prev) => prev.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))
+                              }
+                            />
+                            <input
+                              className="input w-24 shrink-0"
+                              type="number"
+                              min={0}
+                              step={50}
+                              value={a.points}
+                              onChange={(e) =>
+                                setListAnswers((prev) =>
+                                  prev.map((x, j) => (j === i ? { ...x, points: Number(e.target.value) || 0 } : x)),
+                                )
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="text-[var(--color-danger)] text-sm shrink-0"
+                              onClick={() => setListAnswers((prev) => prev.filter((_, j) => j !== i))}
+                            >
+                              حذف
+                            </button>
+                          </div>
+                        ))}
+                        <p className="text-xs text-[var(--color-ink-faint)]">
+                          البديهية نقاطها أقل، والصعبة أعلى — لين 1000.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   <input className="input" placeholder="التلميح الأول (اختياري)" value={newQ.hint} onChange={(e) => setNewQ({ ...newQ, hint: e.target.value })} />
                   {(['hint2', 'hint3', 'hint4'] as const).map((key, i) =>
                     visibleHints > i + 1 ? (
