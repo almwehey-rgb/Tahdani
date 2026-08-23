@@ -15,6 +15,8 @@ import PaymentCallback from './pages/PaymentCallback';
 
 import NewGameWizard from './pages/game/NewGameWizard';
 import Board from './pages/game/Board';
+import ListPicker from './pages/game/ListPicker';
+import ListRound from './pages/game/ListRound';
 import ResultScreen from './pages/game/ResultScreen';
 
 import SubjectPicker from './pages/student/SubjectPicker';
@@ -57,6 +59,9 @@ export default function App() {
           <Route path="new-game/kids" element={<NewGameWizard mode="KIDS" />} />
           <Route path="new-game/student" element={<SubjectPicker />} />
           <Route path="student/:subjectId" element={<StudentQuiz />} />
+
+          <Route path="list" element={<ListPicker />} />
+          <Route path="list/:categoryId" element={<ListRound />} />
 
           <Route path="game/:id/board" element={<Board />} />
           <Route path="game/:id/result" element={<ResultScreen />} />
