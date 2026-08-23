@@ -292,3 +292,13 @@ model TvApplication {
   status        String   @default("PENDING") // PENDING | REVIEWED
   createdAt     DateTime @default(now())
 }
+
+// An image the admin uploaded from their own device. Stored here rather than
+// on a file host so the app needs no extra service; the client shrinks each
+// picture to a cover-sized JPEG first, which keeps these rows small.
+model UploadedImage {
+  id        String   @id @default(cuid())
+  mimeType  String
+  data      Bytes
+  createdAt DateTime @default(now())
+}

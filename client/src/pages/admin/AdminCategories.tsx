@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../../api/client';
+import { uploadImage } from '../../api/uploadImage';
 import type { Category, Question } from '../../api/types';
 import Spinner from '../../components/Spinner';
 
@@ -17,6 +18,7 @@ export default function AdminCategories() {
   // which category's cover is being edited, and the URL being typed for it
   const [editingCover, setEditingCover] = useState<string | null>(null);
   const [coverDraft, setCoverDraft] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [newQ, setNewQ] = useState({
     text: '',
     answer: '',
@@ -73,6 +75,19 @@ export default function AdminCategories() {
     if (!window.confirm(`حذف فئة "${cat.name}"؟${warning}`)) return;
     await api.delete(`/categories/${cat.id}`);
     loadCategories();
+  }
+
+  async function pickImage(file: File | undefined, onDone: (url: string) => void) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      onDone(await uploadImage(file));
+      toast.success('تم رفع الصورة');
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function saveCover(cat: Category) {
@@ -162,10 +177,23 @@ export default function AdminCategories() {
             <label className="label">رابط صورة الغلاف (اختياري)</label>
             <input
               className="input"
-              placeholder="https://..."
+              placeholder="https://... أو ارفع صورة"
               value={newCat.imageUrl}
               onChange={(e) => setNewCat({ ...newCat, imageUrl: e.target.value })}
             />
+            <label className="btn btn-ghost mt-1 w-full cursor-pointer text-sm">
+              {uploading ? 'جاري الرفع...' : '📷 من جهازي'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  pickImage(e.target.files?.[0], (url) => setNewCat((c) => ({ ...c, imageUrl: url })));
+                  e.target.value = '';
+                }}
+              />
+            </label>
           </div>
           <button className="btn btn-primary" onClick={createCategory}>
             إضافة
@@ -229,12 +257,27 @@ export default function AdminCategories() {
                     value={coverDraft}
                     onChange={(e) => setCoverDraft(e.target.value)}
                   />
-                  <p className="text-xs text-[var(--color-ink-faint)] mt-1">
-                    اتركه فارغاً لإزالة الصورة الحالية.
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <label className="btn btn-ghost cursor-pointer text-sm">
+                      {uploading ? 'جاري الرفع...' : '📷 اختر من جهازي'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          pickImage(e.target.files?.[0], setCoverDraft);
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                    <p className="text-xs text-[var(--color-ink-faint)]">
+                      أو الصق رابطاً. اتركه فارغاً لإزالة الصورة.
+                    </p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn btn-primary" onClick={() => saveCover(cat)}>حفظ</button>
+                  <button className="btn btn-primary" disabled={uploading} onClick={() => saveCover(cat)}>حفظ</button>
                   <button className="btn btn-ghost" onClick={() => setEditingCover(null)}>إلغاء</button>
                 </div>
               </div>

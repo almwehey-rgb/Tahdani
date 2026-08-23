@@ -16,6 +16,7 @@ import studentRoutes from './routes/student';
 import episodesRoutes from './routes/episodes';
 import tvApplicationsRoutes from './routes/tvApplications';
 import adminRoutes from './routes/admin';
+import uploadsRoutes from './routes/uploads';
 
 export const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/episodes', episodesRoutes);
 app.use('/api/tv-applications', tvApplicationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
