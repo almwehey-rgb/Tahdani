@@ -23,8 +23,11 @@ export default function ListPicker() {
           const results = await Promise.all(
             cats.slice(i, i + BATCH).map(async (cat) => {
               try {
-                const res = await api.get(`/categories/${cat.id}/questions`);
-                const n = (res.data.questions as Question[]).filter((q) => q.answers && q.answers.length > 0).length;
+                // The public list endpoint already drops questions with no
+                // hidden answers, and unlike the admin questions route it is
+                // readable by an ordinary player.
+                const res = await api.get(`/categories/${cat.id}/list`);
+                const n = (res.data.questions as Question[]).length;
                 return n > 0 ? { cat, count: n } : null;
               } catch {
                 return null; // a category that fails to load simply does not appear
@@ -37,14 +40,8 @@ export default function ListPicker() {
         return out;
       };
 
-      const found = await probe(listCats);
+      await probe(listCats);
 
-      // Nothing declared yet: fall back to reading every category's questions,
-      // so lists built before the type existed are still playable.
-      if (found.length === 0) {
-        const { data } = await api.get('/categories');
-        await probe((data.categories as Category[]).filter((c) => (c._count?.questions ?? 0) > 0 && c.type !== 'LIST'));
-      }
 
       setLoading(false);
     })();

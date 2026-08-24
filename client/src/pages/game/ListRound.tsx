@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../api/client';
@@ -52,17 +53,21 @@ export default function ListRound() {
   const [turnLeft, setTurnLeft] = useState(30);
   const [questionLeft, setQuestionLeft] = useState(0);
   const [running, setRunning] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [cats, qs] = await Promise.all([
-        api.get('/categories'),
-        api.get(`/categories/${categoryId}/questions`),
-      ]);
-      setCategory(cats.data.categories.find((c: Category) => c.id === categoryId) || null);
-      setQuestions((qs.data.questions as Question[]).filter((q) => q.answers && q.answers.length > 0));
-      setLoading(false);
+      try {
+        const { data } = await api.get(`/categories/${categoryId}/list`);
+        setCategory(data.category as Category);
+        setQuestions(data.questions as Question[]);
+      } catch {
+        setCategory(null);
+        setQuestions([]);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [categoryId]);
 
@@ -298,15 +303,43 @@ export default function ListRound() {
   // ---------- play ----------
   const half = Math.ceil(answers.length / 2);
   const columns = [answers.slice(0, half), answers.slice(half)];
+  const judgeUrl = `${window.location.origin}/judge/${categoryId}`;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-5">
-      <div className="text-center mb-4">
+      <div className="text-center mb-4 relative">
         <p className="text-sm text-[var(--color-ink-faint)]">
           سؤال {qIndex + 1} من {questions.length} · {category?.name}
         </p>
         <h1 className="text-xl sm:text-2xl font-extrabold mt-1">{question.text}</h1>
+        <button
+          className="btn btn-ghost !py-1.5 !px-3 text-sm mt-2 sm:mt-0 sm:absolute sm:top-0 sm:left-0"
+          onClick={() => setQrOpen(true)}
+        >
+          ⚖️ باركود الحكم
+        </button>
       </div>
+
+      {qrOpen && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setQrOpen(false)}
+        >
+          <div className="card p-6 text-center max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <p className="font-extrabold text-lg mb-1">⚖️ ورقة الحكم</p>
+            <p className="text-sm text-[var(--color-ink-dim)] mb-4">
+              خل الحكم يمسح الباركود بكاميرا جواله — بتفتح له كل الإجابات ونقاطها.
+            </p>
+            <div className="bg-white p-3 rounded-xl inline-block mb-4">
+              <QRCodeSVG value={judgeUrl} size={200} level="M" />
+            </div>
+            <p className="text-xs text-[var(--color-ink-faint)] break-all mb-4">{judgeUrl}</p>
+            <button className="btn btn-primary w-full" onClick={() => setQrOpen(false)}>
+              تمام
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 items-stretch mb-5">
         {[0, 1].map((i) => {

@@ -46,6 +46,28 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// The list round and the judge's answer sheet both need a category's hidden
+// answers. The judge reaches this by scanning a QR at the table, so it cannot
+// require a login — and the player round cannot require an admin. It is
+// deliberately limited to LIST categories so it can never be used to read the
+// answers of an ordinary quiz category.
+router.get('/:id/list', async (req, res) => {
+  const category = await prisma.category.findFirst({
+    where: { id: req.params.id, active: true, type: 'LIST' },
+    select: { id: true, name: true, icon: true, color: true, imageUrl: true, type: true },
+  });
+  if (!category) return res.status(404).json({ error: 'الفئة غير موجودة' });
+
+  const all = await prisma.question.findMany({
+    where: { categoryId: category.id },
+    orderBy: { points: 'asc' },
+    include: { answers: { orderBy: { sortOrder: 'asc' } } },
+  });
+  // A question with no hidden answers cannot be played as a list round.
+  const questions = all.filter((q) => q.answers.length > 0);
+  res.json({ category, questions });
+});
+
 router.get('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
   const questions = await prisma.question.findMany({
     where: { categoryId: req.params.id },
