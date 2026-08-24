@@ -72,6 +72,9 @@ export default function Board() {
   const [listRevealed, setListRevealed] = useState<Record<string, string>>({}); // answerId -> teamId
   const [listScorerId, setListScorerId] = useState<string | null>(null);
   const [judgeOpen, setJudgeOpen] = useState(false);
+  // Which single item's QR is on screen. In an acting round the actor must see
+  // one word, not the whole card, so every item gets its own code.
+  const [wordQrId, setWordQrId] = useState<string | null>(null);
   const [revealedHints, setRevealedHints] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [phase, setPhase] = useState<'main' | 'steal'>('main');
@@ -233,6 +236,7 @@ export default function Board() {
     setListRevealed({});
     setListScorerId(null);
     setJudgeOpen(false);
+    setWordQrId(null);
     if (tile.isOpened && tile.text) {
       setOpenTile(tile);
       return;
@@ -739,6 +743,21 @@ export default function Board() {
                         </button>
                       </div>
 
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3">
+                        <span className="text-sm text-[var(--color-ink-faint)]">باركود كلمة:</span>
+                        {listAnswers.map((a, i) => (
+                          <button
+                            key={a.id}
+                            title={`باركود الكلمة رقم ${i + 1}`}
+                            disabled={!!listRevealed[a.id]}
+                            onClick={() => setWordQrId(a.id)}
+                            className="w-8 h-8 rounded-lg border border-[var(--color-border)] font-extrabold text-xs disabled:opacity-30"
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+
                       {listTraps.length > 0 && (
                         <div className="rounded-xl border p-3 mb-3" style={{ borderColor: 'var(--color-danger)' }}>
                           <p className="text-center text-xs font-bold mb-2" style={{ color: 'var(--color-danger)' }}>
@@ -895,6 +914,30 @@ export default function Board() {
         )}
         </div>
       </div>
+
+      {wordQrId && openTile && (() => {
+        const a = (openTile.answers ?? []).find((x) => x.id === wordQrId);
+        if (!a) return null;
+        const n = (openTile.answers ?? []).filter((x) => !x.isTrap).findIndex((x) => x.id === wordQrId) + 1;
+        const url = `${window.location.origin}/judge/${openTile.categoryId}?a=${encodeURIComponent(a.id)}`;
+        return (
+          <div className="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center p-4" onClick={() => setWordQrId(null)}>
+            <div className="card p-6 text-center max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <p className="font-extrabold text-lg mb-1">🤫 الكلمة رقم {n}</p>
+              <p className="text-sm text-[var(--color-ink-dim)] mb-4">
+                يمسحه الممثّل بكاميرا جواله — تطلع له هذي الكلمة وحدها، بدون بقية القائمة.
+              </p>
+              <div className="bg-white p-3 rounded-xl inline-block mb-4">
+                <QRCodeSVG value={url} size={200} level="M" />
+              </div>
+              <p className="text-xs text-[var(--color-ink-faint)] break-all mb-4">{url}</p>
+              <button className="btn btn-primary w-full" onClick={() => setWordQrId(null)}>
+                تمام
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {judgeOpen && openTile && (
         <div

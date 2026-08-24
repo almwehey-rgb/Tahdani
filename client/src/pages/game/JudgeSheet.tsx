@@ -15,6 +15,8 @@ export default function JudgeSheet() {
   const [params] = useSearchParams();
   // The round encodes the questions it drew, in play order.
   const qParam = params.get('q') || '';
+  // A single item, for acting rounds: the actor must see one word, not the list.
+  const aParam = params.get('a') || '';
   const [category, setCategory] = useState<Category | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,40 @@ export default function JudgeSheet() {
   }, [search, questions]);
 
   if (loading) return <Spinner />;
+
+  if (aParam) {
+    const found = questions
+      .flatMap((q) => (q.answers ?? []).map((a) => ({ a, q })))
+      .find(({ a }) => a.id === aParam);
+
+    return (
+      <div className="max-w-md mx-auto px-4 py-8 text-center">
+        <p className="text-xs text-[var(--color-danger)] font-bold mb-4">لا تعرض هذي الشاشة لأحد</p>
+        {found ? (
+          <>
+            <p className="text-sm text-[var(--color-ink-faint)] mb-4">{found.q.text}</p>
+            {found.a.imageUrl && (
+              <img
+                src={found.a.imageUrl}
+                alt=""
+                className="w-full max-h-64 object-contain rounded-xl border border-[var(--color-border)] mb-5"
+              />
+            )}
+            <p className="text-3xl sm:text-4xl font-black leading-snug mb-4">{found.a.text}</p>
+            <span className="inline-block font-black text-lg" style={{ color: 'var(--color-gold)' }}>
+              +{found.a.points}
+            </span>
+          </>
+        ) : (
+          <div className="card p-6">
+            <p className="text-4xl mb-3">🚫</p>
+            <p className="font-bold mb-1">ما لقينا الكلمة</p>
+            <p className="text-sm text-[var(--color-ink-dim)]">امسح الباركود مرة ثانية من الشاشة.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (error || !category) {
     return (
