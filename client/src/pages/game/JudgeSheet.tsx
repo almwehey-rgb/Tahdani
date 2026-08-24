@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { Category, Question } from '../../api/types';
 import Spinner from '../../components/Spinner';
@@ -12,11 +12,15 @@ import Spinner from '../../components/Spinner';
  */
 export default function JudgeSheet() {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [params] = useSearchParams();
+  // The round encodes the questions it drew, in play order.
+  const qParam = params.get('q') || '';
   const [category, setCategory] = useState<Category | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [index, setIndex] = useState(0);
+  const [scoped, setScoped] = useState(false); // showing just this round's questions
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -24,14 +28,26 @@ export default function JudgeSheet() {
       try {
         const { data } = await api.get(`/categories/${categoryId}/list`);
         setCategory(data.category);
-        setQuestions(data.questions);
+
+        const all = data.questions as Question[];
+        const wanted = qParam.split(',').map((v) => v.trim()).filter(Boolean);
+        if (wanted.length) {
+          const byId = new Map(all.map((q) => [q.id, q]));
+          // keep the round's order so the judge's numbering matches the screen
+          const picked = wanted.map((id) => byId.get(id)).filter(Boolean) as Question[];
+          // a stale or mistyped link should still be usable, so fall back to all
+          setQuestions(picked.length ? picked : all);
+          setScoped(picked.length > 0 && picked.length < all.length);
+        } else {
+          setQuestions(all);
+        }
       } catch {
         setError('ما قدرنا نفتح ورقة الإجابات. تأكد من الرابط أو امسح الباركود مرة ثانية.');
       } finally {
         setLoading(false);
       }
     })();
-  }, [categoryId]);
+  }, [categoryId, qParam]);
 
   // Judging is mostly "did they just say something on the list?", so a search
   // across every question beats paging to the right one by hand.
@@ -75,6 +91,9 @@ export default function JudgeSheet() {
       >
         <p className="font-extrabold text-lg">⚖️ ورقة الحكم — {category.name}</p>
         <p className="text-xs text-[var(--color-danger)] font-bold mt-1">لا تعرض هذي الشاشة للاعبين</p>
+        <p className="text-xs text-[var(--color-ink-faint)] mt-1">
+          {scoped ? `أسئلة هذي الجولة فقط (${questions.length})` : `كل أسئلة الفئة (${questions.length})`}
+        </p>
       </div>
 
       <input
