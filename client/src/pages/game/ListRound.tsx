@@ -482,41 +482,6 @@ export default function ListRound() {
         })}
       </div>
 
-      <div className="card p-4 mb-4">
-        <p className="text-center font-bold text-sm text-[var(--color-ink-faint)] mb-3">الإجابات</p>
-        <div className="grid sm:grid-cols-2 gap-2">
-          {columns.map((col, ci) => (
-            <div key={ci} className="flex flex-col gap-2">
-              {col.map((a, ri) => {
-                const byIndex = revealed[a.id];
-                const found = byIndex !== undefined;
-                const showHint = !found && hinted.includes(a.id);
-                const slot = ci * half + ri + 1;
-                return (
-                  <button
-                    key={a.id}
-                    onClick={() => reveal(a.id, a.points)}
-                    disabled={found}
-                    className={`flex items-center gap-2 rounded-xl px-2 py-2.5 border transition-colors ${
-                      found ? 'border-transparent' : 'border-[var(--color-border)] hover:bg-[var(--color-tile-hover)]'
-                    }`}
-                    style={found ? { background: `${teams[byIndex].color}22`, borderColor: teams[byIndex].color } : undefined}
-                  >
-                    <span className="w-7 h-7 shrink-0 rounded-lg grid place-items-center text-xs font-extrabold bg-[var(--color-bg-soft)]">
-                      {slot}
-                    </span>
-                    <span className="flex-1 min-w-0 truncate text-start font-bold">
-                      {found ? a.text : showHint ? `${a.text.trim().charAt(0)} …` : '؟ ؟ ؟ ؟ ؟'}
-                    </span>
-                    <span className="shrink-0 font-extrabold tabular-nums text-sm">+{a.points}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {traps.length > 0 && (
         <div className="card p-4 mb-4" style={{ borderColor: 'var(--color-danger)' }}>
           <p className="text-center font-bold text-sm mb-1" style={{ color: 'var(--color-danger)' }}>
@@ -545,6 +510,42 @@ export default function ListRound() {
           </div>
         </div>
       )}
+
+      <div className="card p-4 mb-4">
+        <p className="text-center font-bold text-sm text-[var(--color-ink-faint)] mb-3">الإجابات</p>
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+          {columns.map((col, ci) => (
+            <div key={ci} className="flex flex-col gap-2">
+              {col.map((a, ri) => {
+                const byIndex = revealed[a.id];
+                const found = byIndex !== undefined;
+                const showHint = !found && hinted.includes(a.id);
+                const slot = ci * half + ri + 1;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => reveal(a.id, a.points)}
+                    disabled={found}
+                    className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-1.5 sm:px-2 py-2.5 border transition-colors ${
+                      found ? 'border-transparent' : 'border-[var(--color-border)] hover:bg-[var(--color-tile-hover)]'
+                    }`}
+                    style={found ? { background: `${teams[byIndex].color}22`, borderColor: teams[byIndex].color } : undefined}
+                  >
+                    <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg grid place-items-center text-[10px] sm:text-xs font-extrabold bg-[var(--color-bg-soft)]">
+                      {slot}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate text-start font-bold">
+                      {found ? a.text : showHint ? `${a.text.trim().charAt(0)} …` : '؟ ؟ ؟ ؟ ؟'}
+                    </span>
+                    <span className="shrink-0 font-extrabold tabular-nums text-[11px] sm:text-sm">+{a.points}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+
 
       <div className="flex justify-between gap-2">
         <button className="btn btn-ghost" onClick={() => navigate('/list')}>إنهاء الجولة</button>
