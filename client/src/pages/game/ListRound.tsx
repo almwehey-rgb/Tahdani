@@ -33,12 +33,66 @@ function mmss(total: number) {
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : String(s);
 }
 
+const QUESTIONS_PER_ROUND = 4;
+
+function shuffle<T>(items: T[]): T[] {
+  const a = items.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const seenKey = (categoryId?: string) => `tahdani_list_seen_${categoryId ?? ''}`;
+
+function readSeen(categoryId?: string): string[] {
+  try {
+    const raw = localStorage.getItem(seenKey(categoryId));
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return []; // private windows and blocked storage just mean no memory
+  }
+}
+
+function writeSeen(categoryId: string | undefined, ids: string[]) {
+  try {
+    localStorage.setItem(seenKey(categoryId), JSON.stringify(ids));
+  } catch {
+    /* nothing to do — the round still works, it just repeats sooner */
+  }
+}
+
+/**
+ * Draws this round's questions at random, never the same one twice, and
+ * favours ones this device has not played yet. Once the category has been
+ * exhausted the memory resets so play can continue.
+ */
+function drawQuestions(pool: Question[], categoryId?: string): Question[] {
+  const want = Math.min(QUESTIONS_PER_ROUND, pool.length);
+  const seen = new Set(readSeen(categoryId));
+  let unseen = pool.filter((q) => !seen.has(q.id));
+
+  let picked: Question[];
+  if (unseen.length >= want) {
+    picked = shuffle(unseen).slice(0, want);
+    writeSeen(categoryId, [...seen, ...picked.map((q) => q.id)]);
+  } else {
+    // not enough left: take what is unseen, top up from the rest, start over
+    const topUp = shuffle(pool.filter((q) => seen.has(q.id))).slice(0, want - unseen.length);
+    picked = shuffle([...unseen, ...topUp]);
+    writeSeen(categoryId, picked.map((q) => q.id));
+  }
+  return picked;
+}
+
 export default function ListRound() {
   const { categoryId } = useParams();
   const navigate = useNavigate();
 
   const [category, setCategory] = useState<Category | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [pool, setPool] = useState<Question[]>([]); // everything the category has
+  const [questions, setQuestions] = useState<Question[]>([]); // the few this round plays
   const [loading, setLoading] = useState(true);
 
   const [started, setStarted] = useState(false);
@@ -61,10 +115,10 @@ export default function ListRound() {
       try {
         const { data } = await api.get(`/categories/${categoryId}/list`);
         setCategory(data.category as Category);
-        setQuestions(data.questions as Question[]);
+        setPool(data.questions as Question[]);
       } catch {
         setCategory(null);
-        setQuestions([]);
+        setPool([]);
       } finally {
         setLoading(false);
       }
@@ -171,6 +225,10 @@ export default function ListRound() {
     if (teams.some((t) => t.aids.length !== AIDS_PER_TEAM)) {
       return toast.error(`كل فريق يختار ${AIDS_PER_TEAM} وسائل`);
     }
+    setQuestions(drawQuestions(pool, categoryId));
+    setQIndex(0);
+    setRevealed({});
+    setHinted([]);
     setTurnLeft(turnSeconds);
     setQuestionLeft(questionSeconds);
     setStarted(true);
@@ -188,7 +246,7 @@ export default function ListRound() {
 
   if (loading) return <Spinner />;
 
-  if (!questions.length) {
+  if (!pool.length) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-extrabold mb-2">{category?.name || 'الفئة'}</h1>
@@ -205,7 +263,11 @@ export default function ListRound() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-extrabold mb-1">جاهز للجولة؟</h1>
-        <p className="text-[var(--color-ink-dim)] mb-6">راجع اختياراتك قبل ما تبدأ — {category?.name}</p>
+        <p className="text-[var(--color-ink-dim)] mb-2">راجع اختياراتك قبل ما تبدأ — {category?.name}</p>
+        <p className="text-sm text-[var(--color-ink-faint)] mb-6">
+          🎲 بتجيكم {Math.min(QUESTIONS_PER_ROUND, pool.length)} أسئلة عشوائية من {pool.length} — بدون تكرار،
+          وكل جولة جديدة تجيب أسئلة ما لعبتوها.
+        </p>
 
         <div className="card p-5 mb-4">
           <p className="label mb-2">الفرق</p>
