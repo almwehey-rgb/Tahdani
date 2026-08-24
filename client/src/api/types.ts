@@ -43,6 +43,8 @@ export interface QuestionAnswer {
   points: number;
   /** A trap looks right but sits outside the top ten: saying it costs points. */
   isTrap?: boolean;
+  /** Picture of this item, for acting rounds where a photo beats a word. */
+  imageUrl?: string | null;
   sortOrder: number;
 }
 

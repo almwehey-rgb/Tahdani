@@ -83,6 +83,7 @@ const answerSchema = z.object({
   points: z.number().int().min(0).max(5000).default(100),
   // Traps carry the penalty as a positive number; the round subtracts it.
   isTrap: z.boolean().default(false),
+  imageUrl: z.string().optional().nullable(),
 });
 
 const questionSchema = z.object({

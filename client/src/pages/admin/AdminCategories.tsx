@@ -35,7 +35,7 @@ export default function AdminCategories() {
   const [visibleHints, setVisibleHints] = useState(1);
   // Hidden answers for a list question ("السهل الممتنع"): each row is one
   // answer with its own score. Left empty, the question stays a normal one.
-  const [listAnswers, setListAnswers] = useState<{ text: string; points: number; isTrap: boolean }[]>([]);
+  const [listAnswers, setListAnswers] = useState<{ text: string; points: number; isTrap: boolean; imageUrl: string }[]>([]);
 
   async function loadCategories() {
     setLoading(true);
@@ -119,7 +119,7 @@ export default function AdminCategories() {
         videoUrl: newQ.videoUrl || undefined,
         answers: listAnswers
           .filter((a) => a.text.trim())
-          .map((a) => ({ text: a.text.trim(), points: a.points, isTrap: a.isTrap })),
+          .map((a) => ({ text: a.text.trim(), points: a.points, isTrap: a.isTrap, imageUrl: a.imageUrl.trim() || null })),
       });
       setNewQ({
         text: '',
@@ -334,7 +334,7 @@ export default function AdminCategories() {
                       <button
                         type="button"
                         className="text-sm text-[var(--color-brand-hi)]"
-                        onClick={() => setListAnswers((a) => [...a, { text: '', points: 100, isTrap: false }])}
+                        onClick={() => setListAnswers((a) => [...a, { text: '', points: 100, isTrap: false, imageUrl: '' }])}
                       >
                         + إضافة إجابة
                       </button>
@@ -368,6 +368,32 @@ export default function AdminCategories() {
                                 )
                               }
                             />
+                            {a.imageUrl && (
+                              <img src={a.imageUrl} alt="" className="w-9 h-9 rounded-md object-cover shrink-0" />
+                            )}
+                            <label className="text-xs shrink-0 cursor-pointer text-[var(--color-brand-hi)]" title="صورة للكلمة">
+                              {a.imageUrl ? 'تغيير' : '🖼️ صورة'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={uploading}
+                                onChange={(e) =>
+                                  pickImage(e.target.files?.[0], (url) =>
+                                    setListAnswers((prev) => prev.map((x, j) => (j === i ? { ...x, imageUrl: url } : x))),
+                                  )
+                                }
+                              />
+                            </label>
+                            {a.imageUrl && (
+                              <button
+                                type="button"
+                                className="text-xs shrink-0 text-[var(--color-ink-faint)]"
+                                onClick={() => setListAnswers((prev) => prev.map((x, j) => (j === i ? { ...x, imageUrl: '' } : x)))}
+                              >
+                                إزالة
+                              </button>
+                            )}
                             <label
                               className="flex items-center gap-1 text-xs shrink-0 cursor-pointer"
                               title="فخ: إجابة تبدو صحيحة لكنها خارج القائمة — تنخصم بدل ما تضيف"

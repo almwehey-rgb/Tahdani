@@ -770,6 +770,14 @@ export default function Board() {
                               <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg grid place-items-center text-[10px] sm:text-xs font-extrabold bg-[var(--color-bg-soft)]">
                                 {i + 1}
                               </span>
+                              {scorer && a.imageUrl && (
+                                <img
+                                  src={a.imageUrl}
+                                  alt=""
+                                  loading="lazy"
+                                  className="w-8 h-8 shrink-0 rounded-md object-cover"
+                                />
+                              )}
                               <span className="flex-1 min-w-0 truncate text-start font-bold text-sm">
                                 {scorer ? a.text : '؟ ؟ ؟ ؟ ؟'}
                               </span>
