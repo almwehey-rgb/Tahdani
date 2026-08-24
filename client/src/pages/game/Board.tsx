@@ -411,14 +411,14 @@ export default function Board() {
   const teamCardScale = (() => {
     const n = board.teams.length;
     if (n <= 2)
-      return { card: 'p-4 gap-3', name: 'text-2xl sm:text-3xl', score: 'text-5xl sm:text-6xl', stepper: 'w-10 h-10 text-xl', lifeline: 'text-2xl sm:text-3xl', gap: 'gap-3', showTurnLabel: true };
+      return { card: 'p-4 gap-3', name: 'text-base sm:text-2xl lg:text-3xl', score: 'text-3xl sm:text-5xl lg:text-6xl', stepper: 'w-10 h-10 text-xl', lifeline: 'text-2xl sm:text-3xl', gap: 'gap-3', showTurnLabel: true };
     if (n === 3)
-      return { card: 'p-3 gap-2', name: 'text-xl sm:text-2xl', score: 'text-4xl sm:text-5xl', stepper: 'w-9 h-9 text-lg', lifeline: 'text-xl sm:text-2xl', gap: 'gap-2.5', showTurnLabel: true };
+      return { card: 'p-3 gap-2', name: 'text-sm sm:text-xl lg:text-2xl', score: 'text-3xl sm:text-4xl lg:text-5xl', stepper: 'w-9 h-9 text-lg', lifeline: 'text-xl sm:text-2xl', gap: 'gap-2.5', showTurnLabel: true };
     if (n === 4)
-      return { card: 'p-2.5 gap-1.5', name: 'text-lg sm:text-xl', score: 'text-3xl sm:text-4xl', stepper: 'w-8 h-8 text-base', lifeline: 'text-lg sm:text-xl', gap: 'gap-2', showTurnLabel: true };
+      return { card: 'p-2.5 gap-1.5', name: 'text-sm sm:text-lg lg:text-xl', score: 'text-2xl sm:text-3xl lg:text-4xl', stepper: 'w-8 h-8 text-base', lifeline: 'text-lg sm:text-xl', gap: 'gap-2', showTurnLabel: true };
     if (n <= 6)
-      return { card: 'p-2 gap-1', name: 'text-base sm:text-lg', score: 'text-2xl sm:text-3xl', stepper: 'w-7 h-7 text-sm', lifeline: 'text-base', gap: 'gap-1.5', showTurnLabel: false };
-    return { card: 'p-1.5 gap-0.5', name: 'text-sm', score: 'text-xl sm:text-2xl', stepper: 'w-6 h-6 text-xs', lifeline: 'text-sm', gap: 'gap-1', showTurnLabel: false };
+      return { card: 'p-2 gap-1', name: 'text-xs sm:text-base lg:text-lg', score: 'text-xl sm:text-2xl lg:text-3xl', stepper: 'w-7 h-7 text-sm', lifeline: 'text-base', gap: 'gap-1.5', showTurnLabel: false };
+    return { card: 'p-1.5 gap-0.5', name: 'text-xs lg:text-sm', score: 'text-xl sm:text-2xl', stepper: 'w-6 h-6 text-xs', lifeline: 'text-sm', gap: 'gap-1', showTurnLabel: false };
   })();
 
   const categoriesWithTiles = board.categories.map((cat) => ({
@@ -437,11 +437,11 @@ export default function Board() {
       </p>
 
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1 min-h-0">
-        <div className="lg:w-64 xl:w-72 shrink-0 flex flex-col gap-2 min-h-0">
+        <div className="shrink-0 min-h-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:w-64 xl:w-72">
           {board.teams.map((team, idx) => (
             <div
               key={team.id}
-              className={`card flex flex-col items-center justify-center text-center flex-1 min-h-0 overflow-hidden transition-all ${teamCardScale.card}`}
+              className={`card flex flex-col items-center justify-center text-center flex-1 min-w-[8.5rem] lg:min-w-0 min-h-0 overflow-hidden transition-all ${teamCardScale.card}`}
               style={
                 idx === activeTeamIndex
                   ? {
@@ -453,7 +453,7 @@ export default function Board() {
                   : { borderColor: 'var(--color-border)', borderWidth: 1 }
               }
             >
-              <p className={`${teamCardScale.name} font-extrabold leading-tight line-clamp-1`} style={{ color: team.color }}>
+              <p className={`${teamCardScale.name} font-extrabold leading-normal truncate w-full shrink-0`} style={{ color: team.color }}>
                 {team.name}
               </p>
               {idx === activeTeamIndex && teamCardScale.showTurnLabel && (
@@ -576,8 +576,8 @@ export default function Board() {
             })}
           </div>
         {openTile && activeTeam && (
-          <div className="absolute inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && null}>
-            <div className="card w-full h-full p-6 sm:p-10 animate-pop overflow-y-auto flex flex-col">
+          <div className="fixed lg:absolute inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4" onClick={(e) => e.target === e.currentTarget && null}>
+            <div className="card w-full h-full p-4 sm:p-10 animate-pop overflow-y-auto flex flex-col">
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <span className="text-base sm:text-lg font-bold" style={{ color: activeTeam.color }}>
                   دور فريق: {activeTeam.name} {pickedPlayer && `— يجيب: ${pickedPlayer}`}
@@ -734,11 +734,11 @@ export default function Board() {
                   })}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 shrink-0">
                 {board.teams.map((team) => (
                   <button
                     key={team.id}
-                    className="btn btn-primary text-lg sm:text-xl !py-3.5"
+                    className="btn btn-primary text-base sm:text-xl !py-3.5 !whitespace-normal leading-tight"
                     style={{ background: team.color }}
                     onClick={() => markAnswer(team.id)}
                   >
