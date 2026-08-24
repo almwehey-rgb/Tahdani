@@ -108,6 +108,9 @@ export default function ListRound() {
   const [questionLeft, setQuestionLeft] = useState(0);
   const [running, setRunning] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  // One code per item: in an acting round the actor must see a single word,
+  // not the whole card.
+  const [wordQrId, setWordQrId] = useState<string | null>(null);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -235,6 +238,7 @@ export default function ListRound() {
   }
 
   function nextQuestion() {
+    setWordQrId(null);
     setRevealed({});
     setHinted([]);
     setTurnLeft(turnSeconds);
@@ -400,6 +404,30 @@ export default function ListRound() {
         </button>
       </div>
 
+      {wordQrId && (() => {
+        const a = answers.find((x) => x.id === wordQrId);
+        if (!a) return null;
+        const n = answers.findIndex((x) => x.id === wordQrId) + 1;
+        const url = `${window.location.origin}/judge/${categoryId}?a=${encodeURIComponent(a.id)}`;
+        return (
+          <div className="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center p-4" onClick={() => setWordQrId(null)}>
+            <div className="card p-6 text-center max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+              <p className="font-extrabold text-lg mb-1">🤫 الكلمة رقم {n}</p>
+              <p className="text-sm text-[var(--color-ink-dim)] mb-4">
+                يمسحه الممثّل بكاميرا جواله — تطلع له هذي الكلمة وحدها، بدون بقية القائمة.
+              </p>
+              <div className="bg-white p-3 rounded-xl inline-block mb-4">
+                <QRCodeSVG value={url} size={200} level="M" />
+              </div>
+              <p className="text-xs text-[var(--color-ink-faint)] break-all mb-4">{url}</p>
+              <button className="btn btn-primary w-full" onClick={() => setWordQrId(null)}>
+                تمام
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {qrOpen && (
         <div
           className="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center p-4"
@@ -521,6 +549,22 @@ export default function ListRound() {
 
       <div className="card p-4 mb-4">
         <p className="text-center font-bold text-sm text-[var(--color-ink-faint)] mb-3">الإجابات</p>
+
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3">
+          <span className="text-sm text-[var(--color-ink-faint)]">باركود كلمة:</span>
+          {answers.map((a, i) => (
+            <button
+              key={a.id}
+              title={`باركود الكلمة رقم ${i + 1}`}
+              disabled={revealed[a.id] !== undefined}
+              onClick={() => setWordQrId(a.id)}
+              className="w-8 h-8 rounded-lg border border-[var(--color-border)] font-extrabold text-xs disabled:opacity-30"
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           {columns.map((col, ci) => (
             <div key={ci} className="flex flex-col gap-2">
