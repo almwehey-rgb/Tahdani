@@ -12,15 +12,28 @@ const TILES_PER_TIER = 2;
 // Picks TILES_PER_TIER random questions per point tier (100/200/300)
 // instead of always the same fixed questions, so a larger question bank
 // actually adds variety across games instead of sitting unused.
-function pickBoardQuestions<T extends { points: number }>(questions: T[]): T[] {
+function shuffled<T>(items: T[]): T[] {
+  const a = items.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function pickBoardQuestions<T extends { id: string; points: number }>(questions: T[]): T[] {
   const picked: T[] = [];
   for (const points of [200, 400, 600]) {
-    const pool = questions.filter((q) => q.points === points);
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    picked.push(...pool.slice(0, TILES_PER_TIER));
+    picked.push(...shuffled(questions.filter((q) => q.points === points)).slice(0, TILES_PER_TIER));
+  }
+
+  // A category whose questions all sit on one tier used to yield a stunted
+  // column — two tiles instead of six — with nothing saying why. Top the board
+  // up from whatever else the category has rather than short-change it.
+  const want = TILES_PER_TIER * 3;
+  if (picked.length < want) {
+    const taken = new Set(picked.map((q) => q.id));
+    picked.push(...shuffled(questions.filter((q) => !taken.has(q.id))).slice(0, want - picked.length));
   }
   return picked;
 }
