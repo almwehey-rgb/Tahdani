@@ -150,9 +150,21 @@ export default function AdminCategories() {
     loadCategories();
   }
 
-  async function deleteAllQuestions(categoryId: string) {
-    if (!window.confirm(`هل أنت متأكد؟ راح يتم حذف كل الأسئلة (${questions.length}) في هذه الفئة نهائياً.`)) return;
-    await api.delete(`/categories/${categoryId}/questions`);
+  // A single OK used to empty a whole category with no undo, and it has cost
+  // three categories' worth of questions. Typing the name is the smallest
+  // guard that a stray tap cannot get past.
+  async function deleteAllQuestions(cat: Category) {
+    const count = questions.length;
+    const typed = window.prompt(
+      `سيتم حذف ${count} سؤال من فئة «${cat.name}» نهائياً وبلا رجعة.\n\nاكتب اسم الفئة بالضبط للتأكيد:`,
+    );
+    if (typed === null) return; // cancelled
+    if (typed.trim() !== cat.name.trim()) {
+      toast.error('الاسم ما يطابق — ما انحذف ولا سؤال');
+      return;
+    }
+    await api.delete(`/categories/${cat.id}/questions`);
+    toast.success(`حُذف ${count} سؤال`);
     setQuestions([]);
     loadCategories();
   }
@@ -296,7 +308,7 @@ export default function AdminCategories() {
               <div className="mt-4 border-t border-[var(--color-border)] pt-4">
                 {questions.length > 0 && (
                   <div className="flex justify-end mb-2">
-                    <button className="text-[var(--color-danger)] text-sm" onClick={() => deleteAllQuestions(cat.id)}>
+                    <button className="text-[var(--color-danger)] text-sm" onClick={() => deleteAllQuestions(cat)}>
                       حذف كل الأسئلة ({questions.length})
                     </button>
                   </div>
