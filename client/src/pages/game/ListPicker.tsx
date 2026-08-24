@@ -11,26 +11,47 @@ export default function ListPicker() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await api.get('/categories');
-      const withQuestions = (data.categories as Category[]).filter((c) => (c._count?.questions ?? 0) > 0);
-      // Only a category's own questions say whether they carry a list, so the
-      // ones holding no questions at all are skipped before asking.
-      const found: { cat: Category; count: number }[] = [];
-      for (const cat of withQuestions) {
-        try {
-          const res = await api.get(`/categories/${cat.id}/questions`);
-          const n = (res.data.questions as Question[]).filter((q) => q.answers && q.answers.length > 0).length;
-          if (n > 0) found.push({ cat, count: n });
-        } catch {
-          // a category that fails to load simply does not appear
+      // A category declared LIST is answered in one request, so the normal
+      // case costs a single round trip instead of one per category.
+      const declared = await api.get('/categories', { params: { type: 'LIST' } });
+      const listCats = (declared.data.categories as Category[]).filter((c) => (c._count?.questions ?? 0) > 0);
+
+      const probe = async (cats: Category[]) => {
+        const out: { cat: Category; count: number }[] = [];
+        const BATCH = 8;
+        for (let i = 0; i < cats.length; i += BATCH) {
+          const results = await Promise.all(
+            cats.slice(i, i + BATCH).map(async (cat) => {
+              try {
+                const res = await api.get(`/categories/${cat.id}/questions`);
+                const n = (res.data.questions as Question[]).filter((q) => q.answers && q.answers.length > 0).length;
+                return n > 0 ? { cat, count: n } : null;
+              } catch {
+                return null; // a category that fails to load simply does not appear
+              }
+            }),
+          );
+          out.push(...(results.filter(Boolean) as { cat: Category; count: number }[]));
+          setReady([...out]);
         }
+        return out;
+      };
+
+      const found = await probe(listCats);
+
+      // Nothing declared yet: fall back to reading every category's questions,
+      // so lists built before the type existed are still playable.
+      if (found.length === 0) {
+        const { data } = await api.get('/categories');
+        await probe((data.categories as Category[]).filter((c) => (c._count?.questions ?? 0) > 0 && c.type !== 'LIST'));
       }
-      setReady(found);
+
       setLoading(false);
     })();
   }, []);
 
-  if (loading) return <Spinner />;
+  // Cards appear batch by batch, so the spinner only covers the first wait.
+  if (loading && ready.length === 0) return <Spinner />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -39,7 +60,7 @@ export default function ListPicker() {
         سؤال واحد وله عدة إجابات مخفية. خمّنوا أكبر عدد قبل ما ينتهي الوقت — الإجابة الصعبة نقاطها أعلى.
       </p>
 
-      {ready.length === 0 ? (
+      {ready.length === 0 && !loading ? (
         <div className="card p-6 text-center">
           <p className="font-bold mb-2">ما في فئة جاهزة بعد</p>
           <p className="text-sm text-[var(--color-ink-dim)] mb-4">

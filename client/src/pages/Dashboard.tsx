@@ -44,10 +44,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ActionCard to="/new-game" icon="🎮" title="لعبة تحدّي" desc="لعبة تقليدية بفريقين وفئات ووسائل مساعدة" />
         <ActionCard to="/new-game/kids" icon="🧸" title="واجهة الأطفال" desc="أسئلة مبسطة وممتعة للصغار" />
         <ActionCard to="/new-game/student" icon="🎓" title="حقيبة الطالب" desc="مراجعة المواد الدراسية بطريقة تفاعلية" />
+        <ActionCard to="/list" icon="🧠" title="السهل الممتنع" desc="سؤال واحد وله عدة إجابات مخفية، الصعبة نقاطها أعلى" />
       </div>
 
       <div className="grid sm:grid-cols-3 gap-4 mt-4">
@@ -58,7 +59,6 @@ export default function Dashboard() {
 
       <div className="grid sm:grid-cols-3 gap-4 mt-4">
         <ActionCard to="/history" icon="📜" title="سجل الألعاب" desc="شوف ألعابك السابقة واحذف اللي ما تبيه" />
-        <ActionCard to="/list" icon="🧠" title="السهل الممتنع" desc="سؤال واحد وله عدة إجابات مخفية، الصعبة نقاطها أعلى" />
       </div>
     </div>
   );

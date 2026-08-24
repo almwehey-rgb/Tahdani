@@ -5,7 +5,7 @@ import { uploadImage } from '../../api/uploadImage';
 import type { Category, Question } from '../../api/types';
 import Spinner from '../../components/Spinner';
 
-const TYPES: Category['type'][] = ['PERMANENT', 'SEASONAL', 'KIDS', 'DRAWING', 'STUDENT'];
+const TYPES: Category['type'][] = ['PERMANENT', 'SEASONAL', 'KIDS', 'DRAWING', 'STUDENT', 'LIST'];
 const HINT_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع'];
 
 export default function AdminCategories() {
