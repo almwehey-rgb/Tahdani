@@ -35,7 +35,7 @@ export default function AdminCategories() {
   const [visibleHints, setVisibleHints] = useState(1);
   // Hidden answers for a list question ("السهل الممتنع"): each row is one
   // answer with its own score. Left empty, the question stays a normal one.
-  const [listAnswers, setListAnswers] = useState<{ text: string; points: number }[]>([]);
+  const [listAnswers, setListAnswers] = useState<{ text: string; points: number; isTrap: boolean }[]>([]);
 
   async function loadCategories() {
     setLoading(true);
@@ -117,7 +117,9 @@ export default function AdminCategories() {
         hint4: newQ.hint4 || undefined,
         imageUrl: newQ.imageUrl || undefined,
         videoUrl: newQ.videoUrl || undefined,
-        answers: listAnswers.filter((a) => a.text.trim()).map((a) => ({ text: a.text.trim(), points: a.points })),
+        answers: listAnswers
+          .filter((a) => a.text.trim())
+          .map((a) => ({ text: a.text.trim(), points: a.points, isTrap: a.isTrap })),
       });
       setNewQ({
         text: '',
@@ -307,7 +309,7 @@ export default function AdminCategories() {
                         {q.answers && q.answers.length > 0 ? (
                           <p className="text-[var(--color-ink-faint)]">
                             {q.answers.length} إجابة مخفية:{' '}
-                            {q.answers.map((a) => `${a.text} (${a.points})`).join('، ')}
+                            {q.answers.map((a) => (a.isTrap ? `💣 ${a.text} (−${a.points})` : `${a.text} (${a.points})`)).join('، ')}
                           </p>
                         ) : (
                           <p className="text-[var(--color-ink-faint)]">
@@ -332,7 +334,7 @@ export default function AdminCategories() {
                       <button
                         type="button"
                         className="text-sm text-[var(--color-brand-hi)]"
-                        onClick={() => setListAnswers((a) => [...a, { text: '', points: 100 }])}
+                        onClick={() => setListAnswers((a) => [...a, { text: '', points: 100, isTrap: false }])}
                       >
                         + إضافة إجابة
                       </button>
@@ -366,6 +368,21 @@ export default function AdminCategories() {
                                 )
                               }
                             />
+                            <label
+                              className="flex items-center gap-1 text-xs shrink-0 cursor-pointer"
+                              title="فخ: إجابة تبدو صحيحة لكنها خارج القائمة — تنخصم بدل ما تضيف"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={a.isTrap}
+                                onChange={(e) =>
+                                  setListAnswers((prev) =>
+                                    prev.map((x, j) => (j === i ? { ...x, isTrap: e.target.checked } : x)),
+                                  )
+                                }
+                              />
+                              💣 فخ
+                            </label>
                             <button
                               type="button"
                               className="text-[var(--color-danger)] text-sm shrink-0"
@@ -376,7 +393,8 @@ export default function AdminCategories() {
                           </div>
                         ))}
                         <p className="text-xs text-[var(--color-ink-faint)]">
-                          البديهية نقاطها أقل، والصعبة أعلى — لين 1000.
+                          البديهية نقاطها أقل، والصعبة أعلى — لين 1000. و«الفخ» إجابة مشهورة بس خارج
+                          القائمة، نقاطها تنخصم من الفريق اللي يقولها.
                         </p>
                       </div>
                     )}

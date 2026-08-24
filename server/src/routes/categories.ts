@@ -81,6 +81,8 @@ router.get('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
 const answerSchema = z.object({
   text: z.string().min(1),
   points: z.number().int().min(0).max(5000).default(100),
+  // Traps carry the penalty as a positive number; the round subtracts it.
+  isTrap: z.boolean().default(false),
 });
 
 const questionSchema = z.object({
@@ -105,7 +107,7 @@ router.post('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
   const parsed = questionSchema.safeParse({ ...req.body, categoryId: req.params.id });
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
   const { answers, ...rest } = parsed.data;
-  const answer = rest.answer || (answers && answers.length ? answers.map((a) => a.text).join('، ') : '');
+  const answer = rest.answer || (answers && answers.length ? answers.filter((a) => !a.isTrap).map((a) => a.text).join('، ') : '');
   if (!answer) return res.status(400).json({ error: 'الإجابة مطلوبة' });
   const question = await prisma.question.create({
     data: {
@@ -136,7 +138,7 @@ router.put('/questions/:qid', requireAuth, requireAdmin, async (req: AuthedReque
       }
     }
     const data = { ...rest };
-    if (answers && answers.length && !rest.answer) data.answer = answers.map((a) => a.text).join('، ');
+    if (answers && answers.length && !rest.answer) data.answer = answers.filter((a) => !a.isTrap).map((a) => a.text).join('، ');
     return tx.question.update({
       where: { id: req.params.qid },
       data,

@@ -41,13 +41,16 @@ export default function JudgeSheet() {
     const norm = (s: string) =>
       s.replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase();
     const needle = norm(q);
-    const out: { question: Question; text: string; points: number }[] = [];
+    const out: { question: Question; text: string; points: number; isTrap: boolean }[] = [];
     questions.forEach((question) =>
       (question.answers ?? []).forEach((a) => {
-        if (norm(a.text).includes(needle)) out.push({ question, text: a.text, points: a.points });
+        if (norm(a.text).includes(needle)) {
+          out.push({ question, text: a.text, points: a.points, isTrap: !!a.isTrap });
+        }
       }),
     );
-    return out;
+    // a trap match is the one the judge must not miss, so it leads
+    return out.sort((a, b) => Number(b.isTrap) - Number(a.isTrap));
   }, [search, questions]);
 
   if (loading) return <Spinner />;
@@ -88,13 +91,26 @@ export default function JudgeSheet() {
           </p>
           <div className="flex flex-col gap-2">
             {hits.map((h, i) => (
-              <div key={i} className="card p-3 flex items-center justify-between gap-3">
+              <div
+                key={i}
+                className="card p-3 flex items-center justify-between gap-3"
+                style={h.isTrap ? { borderColor: 'var(--color-danger)', borderWidth: 2 } : undefined}
+              >
                 <div className="min-w-0">
-                  <p className="font-bold truncate">{h.text}</p>
-                  <p className="text-xs text-[var(--color-ink-faint)] truncate">{h.question.text}</p>
+                  <p className="font-bold truncate">
+                    {h.isTrap && '💣 '}
+                    {h.text}
+                  </p>
+                  <p className="text-xs text-[var(--color-ink-faint)] truncate">
+                    {h.isTrap ? 'فخ! مو ضمن التوب — اخصم منهم' : h.question.text}
+                  </p>
                 </div>
-                <span className="font-black shrink-0" style={{ color: 'var(--color-gold)' }}>
-                  +{h.points}
+                <span
+                  className="font-black shrink-0"
+                  style={{ color: h.isTrap ? 'var(--color-danger)' : 'var(--color-gold)' }}
+                >
+                  {h.isTrap ? '−' : '+'}
+                  {h.points}
                 </span>
               </div>
             ))}
@@ -123,19 +139,48 @@ export default function JudgeSheet() {
           <p className="font-extrabold text-lg mb-3 leading-relaxed">{current.text}</p>
 
           <div className="flex flex-col gap-2">
-            {(current.answers ?? []).map((a, i) => (
-              <div key={a.id} className="card p-3 flex items-center gap-3">
-                <span className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-black"
-                  style={{ background: 'var(--color-surface-hi)' }}>
-                  {i + 1}
-                </span>
-                <p className="font-bold flex-1 min-w-0">{a.text}</p>
-                <span className="font-black shrink-0" style={{ color: 'var(--color-gold)' }}>
-                  +{a.points}
-                </span>
-              </div>
-            ))}
+            {(current.answers ?? [])
+              .filter((a) => !a.isTrap)
+              .map((a, i) => (
+                <div key={a.id} className="card p-3 flex items-center gap-3">
+                  <span
+                    className="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-black"
+                    style={{ background: 'var(--color-surface-hi)' }}
+                  >
+                    {i + 1}
+                  </span>
+                  <p className="font-bold flex-1 min-w-0">{a.text}</p>
+                  <span className="font-black shrink-0" style={{ color: 'var(--color-gold)' }}>
+                    +{a.points}
+                  </span>
+                </div>
+              ))}
           </div>
+
+          {(current.answers ?? []).some((a) => a.isTrap) && (
+            <div className="mt-4">
+              <p className="font-extrabold text-sm mb-2" style={{ color: 'var(--color-danger)' }}>
+                💣 الفخ — لو قالوها اخصم منهم
+              </p>
+              <div className="flex flex-col gap-2">
+                {(current.answers ?? [])
+                  .filter((a) => a.isTrap)
+                  .map((a) => (
+                    <div
+                      key={a.id}
+                      className="card p-3 flex items-center gap-3"
+                      style={{ borderColor: 'var(--color-danger)', borderWidth: 2 }}
+                    >
+                      <span className="shrink-0">💣</span>
+                      <p className="font-bold flex-1 min-w-0">{a.text}</p>
+                      <span className="font-black shrink-0" style={{ color: 'var(--color-danger)' }}>
+                        −{a.points}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

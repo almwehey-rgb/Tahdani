@@ -103,9 +103,10 @@ export default function ListRound() {
 
   const question = questions[qIndex];
   const answers = useMemo(
-    () => [...(question?.answers || [])].sort((a, b) => a.points - b.points),
+    () => (question?.answers || []).filter((a) => !a.isTrap).slice().sort((a, b) => a.points - b.points),
     [question],
   );
+  const traps = useMemo(() => (question?.answers || []).filter((a) => a.isTrap), [question]);
   const allFound = answers.length > 0 && answers.every((a) => revealed[a.id] !== undefined);
 
   const reveal = useCallback(
@@ -114,6 +115,19 @@ export default function ListRound() {
       setRevealed((r) => ({ ...r, [answerId]: active }));
       setTeams((t) => t.map((x, i) => (i === active ? { ...x, score: x.score + points } : x)));
       setTurnLeft(turnSeconds); // a correct answer buys the team a fresh turn
+    },
+    [revealed, active, turnSeconds],
+  );
+
+  const springTrap = useCallback(
+    (trapId: string, penalty: number) => {
+      if (revealed[trapId] !== undefined) return;
+      setRevealed((r) => ({ ...r, [trapId]: active }));
+      setTeams((t) => t.map((x, i) => (i === active ? { ...x, score: x.score - penalty } : x)));
+      // no fresh turn here: the point of the trap is that it costs you the turn
+      setActive((a) => (a === 0 ? 1 : 0));
+      setTurnLeft(turnSeconds);
+      toast(`وقعوا بالفخ! −${penalty}`, { icon: '💣' });
     },
     [revealed, active, turnSeconds],
   );
@@ -440,6 +454,35 @@ export default function ListRound() {
           ))}
         </div>
       </div>
+
+      {traps.length > 0 && (
+        <div className="card p-4 mb-4" style={{ borderColor: 'var(--color-danger)' }}>
+          <p className="text-center font-bold text-sm mb-1" style={{ color: 'var(--color-danger)' }}>
+            💣 حقل الألغام
+          </p>
+          <p className="text-center text-xs text-[var(--color-ink-faint)] mb-3">
+            إذا قال الفريق إجابة يشوفها الحكم مفخّخة، اضغط هنا — تنخصم منهم وينتقل الدور.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {traps.map((t) => {
+              const sprung = revealed[t.id] !== undefined;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => springTrap(t.id, t.points)}
+                  disabled={sprung}
+                  className="rounded-xl px-3 py-2 border font-bold text-sm transition-colors disabled:opacity-50"
+                  style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)' }}
+                >
+                  {/* the trap's text stays hidden until it is walked into —
+                      only the judge's sheet reveals it beforehand */}
+                  💣 {sprung ? t.text : 'وقعوا بالفخ'} −{t.points}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between gap-2">
         <button className="btn btn-ghost" onClick={() => navigate('/list')}>إنهاء الجولة</button>

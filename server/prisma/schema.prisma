@@ -141,6 +141,9 @@ model QuestionAnswer {
   question   Question @relation(fields: [questionId], references: [id])
   text       String
   points     Int      @default(100)
+  // A trap is not one of the hidden slots: it looks like a right answer but
+  // sits outside the top ten, and saying it deducts `points` instead.
+  isTrap     Boolean  @default(false)
   sortOrder  Int      @default(0)
 }
 
