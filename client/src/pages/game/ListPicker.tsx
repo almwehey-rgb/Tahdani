@@ -42,7 +42,6 @@ export default function ListPicker() {
 
       await probe(listCats);
 
-
       setLoading(false);
     })();
   }, []);
