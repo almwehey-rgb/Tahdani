@@ -16,6 +16,7 @@ import PaymentCallback from './pages/PaymentCallback';
 import NewGameWizard from './pages/game/NewGameWizard';
 import Board from './pages/game/Board';
 import ListPicker from './pages/game/ListPicker';
+import JudgeSheet from './pages/game/JudgeSheet';
 import ListRound from './pages/game/ListRound';
 import ResultScreen from './pages/game/ResultScreen';
 
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="episodes" element={<Episodes />} />
         <Route path="tv-apply" element={<TvApply />} />
         <Route path="packages" element={<Packages />} />
+        <Route path="judge/:categoryId" element={<JudgeSheet />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
