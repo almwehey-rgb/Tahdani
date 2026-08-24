@@ -379,7 +379,11 @@ export default function ListRound() {
   // ---------- play ----------
   const half = Math.ceil(answers.length / 2);
   const columns = [answers.slice(0, half), answers.slice(half)];
-  const judgeUrl = `${window.location.origin}/judge/${categoryId}`;
+  // The sheet carries this round's questions in the order they are played, so
+  // the judge sees the four in hand instead of the whole category.
+  const judgeUrl =
+    `${window.location.origin}/judge/${categoryId}` +
+    `?q=${encodeURIComponent(questions.map((q) => q.id).join(','))}`;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-5">
