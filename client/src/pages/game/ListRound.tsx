@@ -491,8 +491,12 @@ export default function ListRound() {
             إذا قال الفريق إجابة يشوفها الحكم مفخّخة، اضغط هنا — تنخصم منهم وينتقل الدور.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            {traps.map((t) => {
+            {traps.map((t, i) => {
               const sprung = revealed[t.id] !== undefined;
+              // With more than one trap the buttons are otherwise identical, so
+              // they are numbered to match the judge's sheet — the judge can say
+              // "الفخ الثاني" and the host presses the right one.
+              const label = sprung ? t.text : traps.length > 1 ? `فخ ${i + 1}` : 'وقعوا بالفخ';
               return (
                 <button
                   key={t.id}
@@ -503,7 +507,7 @@ export default function ListRound() {
                 >
                   {/* the trap's text stays hidden until it is walked into —
                       only the judge's sheet reveals it beforehand */}
-                  💣 {sprung ? t.text : 'وقعوا بالفخ'} −{t.points}
+                  💣 {label} −{t.points}
                 </button>
               );
             })}

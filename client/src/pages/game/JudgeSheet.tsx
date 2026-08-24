@@ -165,13 +165,17 @@ export default function JudgeSheet() {
               <div className="flex flex-col gap-2">
                 {(current.answers ?? [])
                   .filter((a) => a.isTrap)
-                  .map((a) => (
+                  .map((a, i, all) => (
                     <div
                       key={a.id}
                       className="card p-3 flex items-center gap-3"
                       style={{ borderColor: 'var(--color-danger)', borderWidth: 2 }}
                     >
-                      <span className="shrink-0">💣</span>
+                      {/* numbered to match the host's buttons when there is
+                          more than one, so the judge can name which to press */}
+                      <span className="shrink-0 font-black text-sm" style={{ color: 'var(--color-danger)' }}>
+                        💣{all.length > 1 ? ` ${i + 1}` : ''}
+                      </span>
                       <p className="font-bold flex-1 min-w-0">{a.text}</p>
                       <span className="font-black shrink-0" style={{ color: 'var(--color-danger)' }}>
                         −{a.points}
