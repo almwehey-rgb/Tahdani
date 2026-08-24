@@ -70,11 +70,11 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
     api
       .get('/categories', { params: categoryType ? { type: categoryType } : undefined })
       .then(({ data }) => {
-        // LIST categories hold hidden-answer lists, not one-answer tiles, so
-        // picking one here would open an ordinary board over the wrong content.
+        // LIST categories belong here too: the board plays their hidden-answer
+        // questions in place rather than as a separate mode.
         const cats: Category[] =
           mode === 'CLASSIC'
-            ? data.categories.filter((c: Category) => c.type !== 'KIDS' && c.type !== 'STUDENT' && c.type !== 'LIST')
+            ? data.categories.filter((c: Category) => c.type !== 'KIDS' && c.type !== 'STUDENT')
             : data.categories;
         setCategories(cats);
       })

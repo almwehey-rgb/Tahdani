@@ -144,6 +144,8 @@ export interface GameTile {
   imageUrl?: string | null;
   videoUrl?: string | null;
   grayscale?: boolean;
+  /** Present on questions from a LIST category: the board plays them in place. */
+  answers?: QuestionAnswer[];
 }
 
 export interface Game {

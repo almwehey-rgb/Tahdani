@@ -110,7 +110,7 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
   const [teams, gameCategories, gameQuestions] = await Promise.all([
     prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } }),
     prisma.gameCategory.findMany({ where: { gameId: game.id }, include: { category: true } }),
-    prisma.gameQuestion.findMany({ where: { gameId: game.id }, include: { question: true } }),
+    prisma.gameQuestion.findMany({ where: { gameId: game.id }, include: { question: { include: { answers: { orderBy: { sortOrder: 'asc' } } } } } }),
   ]);
 
   const tiles = gameQuestions.map((gq) => ({
@@ -133,6 +133,7 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
           imageUrl: gq.question.imageUrl,
           videoUrl: gq.question.videoUrl,
           grayscale: gq.question.grayscale,
+          answers: gq.question.answers,
         }
       : {}),
   }));
@@ -152,7 +153,7 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
   const gq = await prisma.gameQuestion.update({
     where: { id: req.params.gqId },
     data: { isOpened: true },
-    include: { question: true },
+    include: { question: { include: { answers: { orderBy: { sortOrder: 'asc' } } } } },
   });
   res.json({
     tile: {
@@ -168,6 +169,7 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
       grayscale: gq.question.grayscale,
       points: gq.question.points,
       isDrawing: gq.question.isDrawing,
+      answers: gq.question.answers,
     },
   });
 });

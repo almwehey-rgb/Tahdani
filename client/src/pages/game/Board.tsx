@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../../api/client';
@@ -65,6 +66,12 @@ export default function Board() {
   // can be a couple of pixels wide at the size it shows in the card.
   const [zoomedImage, setZoomedImage] = useState<{ src: string; grayscale: boolean } | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  // Questions from a LIST category are played on the board itself: each hidden
+  // answer is scored to whichever team said it, so the tile's own points and
+  // the "جاوب صح" buttons do not apply.
+  const [listRevealed, setListRevealed] = useState<Record<string, string>>({}); // answerId -> teamId
+  const [listScorerId, setListScorerId] = useState<string | null>(null);
+  const [judgeOpen, setJudgeOpen] = useState(false);
   const [revealedHints, setRevealedHints] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [phase, setPhase] = useState<'main' | 'steal'>('main');
@@ -176,6 +183,12 @@ export default function Board() {
   const activeTeamIndex = trapTargetIndex ?? turn;
   const activeTeam = board?.teams[activeTeamIndex];
 
+  const listAnswers = (openTile?.answers ?? []).filter((a) => !a.isTrap);
+  const listTraps = (openTile?.answers ?? []).filter((a) => a.isTrap);
+  const isListQuestion = (openTile?.answers?.length ?? 0) > 0;
+  // Whoever the host last pointed at, falling back to the team whose turn it is.
+  const listScorer = board?.teams.find((t) => t.id === listScorerId) ?? activeTeam;
+
   const tileHints = openTile
     ? [openTile.hint, openTile.hint2, openTile.hint3, openTile.hint4].filter((h): h is string => !!h)
     : [];
@@ -217,6 +230,9 @@ export default function Board() {
     setDoublePointsActive(false);
     setShowAnswer(false);
     setRevealedHints(0);
+    setListRevealed({});
+    setListScorerId(null);
+    setJudgeOpen(false);
     if (tile.isOpened && tile.text) {
       setOpenTile(tile);
       return;
@@ -373,6 +389,20 @@ export default function Board() {
     } catch (err) {
       toast.error(apiErrorMessage(err));
     }
+  }
+
+  // A list answer pays the team that said it; a trap takes the same off them.
+  function revealListAnswer(answerId: string, points: number) {
+    if (!listScorer || listRevealed[answerId]) return;
+    setListRevealed((r) => ({ ...r, [answerId]: listScorer.id }));
+    adjustScore(listScorer.id, points);
+  }
+
+  function springListTrap(trapId: string, penalty: number) {
+    if (!listScorer || listRevealed[trapId]) return;
+    setListRevealed((r) => ({ ...r, [trapId]: listScorer.id }));
+    adjustScore(listScorer.id, -penalty);
+    toast(`وقعوا بالفخ! −${penalty}`, { icon: '💣' });
   }
 
   async function adjustScore(teamId: string, delta: number) {
@@ -666,9 +696,90 @@ export default function Board() {
                       </p>
                     )}
                   </div>
-                  <button className="btn btn-ghost w-full mb-4 text-lg sm:text-xl !py-3 shrink-0" onClick={() => setShowAnswer((s) => !s)}>
-                    {showAnswer ? 'إخفاء الإجابة' : 'اظهر الإجابة'}
-                  </button>
+                  {!isListQuestion && (
+                    <button className="btn btn-ghost w-full mb-4 text-lg sm:text-xl !py-3 shrink-0" onClick={() => setShowAnswer((s) => !s)}>
+                      {showAnswer ? 'إخفاء الإجابة' : 'اظهر الإجابة'}
+                    </button>
+                  )}
+
+                  {isListQuestion && (
+                    <div className="shrink-0 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+                        <span className="text-sm text-[var(--color-ink-faint)]">النقاط تروح لـ:</span>
+                        {board.teams.map((team) => (
+                          <button
+                            key={team.id}
+                            className="px-3 py-1.5 rounded-full text-sm font-bold border-2 transition-colors"
+                            style={{
+                              borderColor: team.color,
+                              background: listScorer?.id === team.id ? team.color : 'transparent',
+                              color: listScorer?.id === team.id ? '#fff' : team.color,
+                            }}
+                            onClick={() => setListScorerId(team.id)}
+                          >
+                            {team.name}
+                          </button>
+                        ))}
+                        <button
+                          className="px-3 py-1.5 rounded-full text-sm font-bold border border-[var(--color-border)]"
+                          onClick={() => setJudgeOpen(true)}
+                        >
+                          ⚖️ باركود الحكم
+                        </button>
+                      </div>
+
+                      {listTraps.length > 0 && (
+                        <div className="rounded-xl border p-3 mb-3" style={{ borderColor: 'var(--color-danger)' }}>
+                          <p className="text-center text-xs font-bold mb-2" style={{ color: 'var(--color-danger)' }}>
+                            💣 حقل الألغام — لو قالوا إجابة يشوفها الحكم مفخّخة
+                          </p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {listTraps.map((t, i) => {
+                              const sprung = !!listRevealed[t.id];
+                              const label = sprung ? t.text : listTraps.length > 1 ? `فخ ${i + 1}` : 'وقعوا بالفخ';
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => springListTrap(t.id, t.points)}
+                                  disabled={sprung}
+                                  className="rounded-lg px-3 py-1.5 border font-bold text-sm disabled:opacity-50"
+                                  style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)' }}
+                                >
+                                  💣 {label} −{t.points}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                        {listAnswers.map((a, i) => {
+                          const byId = listRevealed[a.id];
+                          const scorer = board.teams.find((t) => t.id === byId);
+                          return (
+                            <button
+                              key={a.id}
+                              onClick={() => revealListAnswer(a.id, a.points)}
+                              disabled={!!scorer}
+                              className={`flex items-center gap-1.5 rounded-xl px-1.5 sm:px-2 py-2.5 border transition-colors ${
+                                scorer ? 'border-transparent' : 'border-[var(--color-border)] hover:bg-[var(--color-tile-hover)]'
+                              }`}
+                              style={scorer ? { background: `${scorer.color}22`, borderColor: scorer.color } : undefined}
+                            >
+                              <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg grid place-items-center text-[10px] sm:text-xs font-extrabold bg-[var(--color-bg-soft)]">
+                                {i + 1}
+                              </span>
+                              <span className="flex-1 min-w-0 truncate text-start font-bold text-sm">
+                                {scorer ? a.text : '؟ ؟ ؟ ؟ ؟'}
+                              </span>
+                              <span className="shrink-0 font-extrabold tabular-nums text-[11px] sm:text-sm">+{a.points}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -734,7 +845,7 @@ export default function Board() {
                   })}
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 shrink-0">
+              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2 shrink-0 ${isListQuestion ? 'hidden' : ''}`}>
                 {board.teams.map((team) => (
                   <button
                     key={team.id}
@@ -747,7 +858,7 @@ export default function Board() {
                 ))}
               </div>
               <button className="btn btn-ghost w-full mb-2 text-base sm:text-lg !py-3 shrink-0" onClick={() => markAnswer(null)}>
-                لا أحد جاوب / اللي بعده
+                {isListQuestion ? 'خلّصنا السؤال / اللي بعده' : 'لا أحد جاوب / اللي بعده'}
               </button>
               <button className="text-sm sm:text-base text-[var(--color-ink-faint)] w-full text-center shrink-0" onClick={() => setVarOpen((v) => !v)}>
                 🚩 ساعدنا في تعديل الخطأ (VAR)
@@ -765,6 +876,37 @@ export default function Board() {
         )}
         </div>
       </div>
+
+      {judgeOpen && openTile && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/85 flex items-center justify-center p-4"
+          onClick={() => setJudgeOpen(false)}
+        >
+          <div className="card p-6 text-center max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <p className="font-extrabold text-lg mb-1">⚖️ ورقة الحكم</p>
+            <p className="text-sm text-[var(--color-ink-dim)] mb-4">
+              خل الحكم يمسح الباركود بكاميرا جواله — بتفتح له إجابات هذا السؤال ونقاطها.
+            </p>
+            {(() => {
+              // The tile carries no question id of its own, but every answer
+              // knows which question it belongs to.
+              const qid = openTile.answers?.[0]?.questionId;
+              const url = `${window.location.origin}/judge/${openTile.categoryId}?q=${encodeURIComponent(qid ?? '')}`;
+              return (
+                <>
+                  <div className="bg-white p-3 rounded-xl inline-block mb-4">
+                    <QRCodeSVG value={url} size={200} level="M" />
+                  </div>
+                  <p className="text-xs text-[var(--color-ink-faint)] break-all mb-4">{url}</p>
+                </>
+              );
+            })()}
+            <button className="btn btn-primary w-full" onClick={() => setJudgeOpen(false)}>
+              تمام
+            </button>
+          </div>
+        </div>
+      )}
 
       {zoomedImage && (
         <div
