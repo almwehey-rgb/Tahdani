@@ -41,6 +41,8 @@ export interface QuestionAnswer {
   questionId: string;
   text: string;
   points: number;
+  /** A trap looks right but sits outside the top ten: saying it costs points. */
+  isTrap?: boolean;
   sortOrder: number;
 }
 
