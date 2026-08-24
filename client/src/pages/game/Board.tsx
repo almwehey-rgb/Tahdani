@@ -525,7 +525,7 @@ export default function Board() {
 
         <div className="flex-1 min-w-0 flex flex-col min-h-0 relative">
           <div
-            className="grid gap-3 flex-1 min-h-0"
+            className={`grid gap-3 flex-1 min-h-0 ${openTile && isListQuestion ? 'hidden' : ''}`}
             style={{
               gridTemplateColumns: `repeat(${boardColumns}, minmax(0,1fr))`,
               gridTemplateRows: `repeat(${boardRows}, minmax(0,1fr))`,
@@ -606,8 +606,19 @@ export default function Board() {
             })}
           </div>
         {openTile && activeTeam && (
-          <div className="fixed lg:absolute inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4" onClick={(e) => e.target === e.currentTarget && null}>
-            <div className="card w-full h-full p-4 sm:p-10 animate-pop overflow-y-auto flex flex-col">
+          <div
+            className={
+              isListQuestion
+                ? 'flex-1 min-h-0 flex'
+                : 'fixed lg:absolute inset-0 z-50 bg-black/70 flex items-center justify-center p-3 sm:p-4'
+            }
+            onClick={(e) => e.target === e.currentTarget && null}
+          >
+            <div
+              className={`card w-full animate-pop overflow-y-auto flex flex-col ${
+                isListQuestion ? 'p-3 sm:p-5' : 'h-full p-4 sm:p-10'
+              }`}
+            >
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <span className="text-base sm:text-lg font-bold" style={{ color: activeTeam.color }}>
                   دور فريق: {activeTeam.name} {pickedPlayer && `— يجيب: ${pickedPlayer}`}
