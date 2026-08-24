@@ -51,6 +51,25 @@ router.get('/users', async (req, res) => {
   res.json({ users });
 });
 
+// Editing a user was only possible by running a script against the database,
+// which is no way to hand someone unlimited games or top up their balance.
+const userPatchSchema = z.object({
+  remainingGames: z.number().int().min(0).max(100000).optional(),
+  unlimitedGames: z.boolean().optional(),
+  role: z.enum(['USER', 'ADMIN']).optional(),
+});
+
+router.put('/users/:id', async (req, res) => {
+  const parsed = userPatchSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
+  try {
+    const user = await prisma.user.update({ where: { id: req.params.id }, data: parsed.data });
+    res.json({ user });
+  } catch {
+    res.status(404).json({ error: 'المستخدم غير موجود' });
+  }
+});
+
 router.get('/access-code', async (_req, res) => {
   const setting = await prisma.appSetting.findUnique({ where: { id: 'singleton' } });
   res.json({ accessCode: setting?.accessCode || null });
