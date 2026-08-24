@@ -72,6 +72,9 @@ export default function Home() {
           <Link to="/new-game/kids" className="btn btn-ghost text-lg">
             🧸 واجهة الأطفال
           </Link>
+          <Link to="/list" className="btn btn-ghost text-lg">
+            🧠 السهل الممتنع
+          </Link>
         </div>
       </section>
 

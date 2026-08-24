@@ -36,6 +36,7 @@ export default function Layout() {
 
           <nav className="hidden md:flex items-center gap-1">
             <NavLink to="/" end className={navLinkClass}>الرئيسية</NavLink>
+            {user && <NavLink to="/dashboard" className={navLinkClass}>ألعابي</NavLink>}
             <NavLink to="/tournaments" className={navLinkClass}>البطولات</NavLink>
             <NavLink to="/episodes" className={navLinkClass}>الحلقات</NavLink>
             <NavLink to="/tv-apply" className={navLinkClass}>شارك في البرنامج</NavLink>
@@ -79,6 +80,7 @@ export default function Layout() {
         {open && (
           <div className="md:hidden flex flex-col gap-1 px-4 pb-3">
             <NavLink to="/" end className={navLinkClass} onClick={() => setOpen(false)}>الرئيسية</NavLink>
+            {user && <NavLink to="/dashboard" className={navLinkClass} onClick={() => setOpen(false)}>ألعابي</NavLink>}
             <NavLink to="/tournaments" className={navLinkClass} onClick={() => setOpen(false)}>البطولات</NavLink>
             <NavLink to="/episodes" className={navLinkClass} onClick={() => setOpen(false)}>الحلقات</NavLink>
             <NavLink to="/tv-apply" className={navLinkClass} onClick={() => setOpen(false)}>شارك في البرنامج</NavLink>
