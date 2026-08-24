@@ -17,7 +17,9 @@ export default function Dashboard() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-extrabold mb-1">أهلا {user?.name} 👋</h1>
-      <p className="text-[var(--color-ink-dim)] mb-6">لديك {user?.remainingGames ?? 0} لعبة متبقية</p>
+      <p className="text-[var(--color-ink-dim)] mb-6">
+        {user?.unlimitedGames ? 'ألعابك بلا حدّ ∞' : `لديك ${user?.remainingGames ?? 0} لعبة متبقية`}
+      </p>
 
       {activeGame === undefined && <Spinner />}
 

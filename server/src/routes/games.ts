@@ -57,9 +57,13 @@ router.post('/', requireAuth, async (req: AuthedRequest, res) => {
   }
 
   const costsCredit = mode !== 'STUDENT';
+  let unlimited = false;
   if (costsCredit) {
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user || user.remainingGames < 1) {
+    if (!user) return res.status(402).json({ error: 'لا يوجد لديك ألعاب متبقية، يرجى شراء باقة جديدة' });
+    // An unlimited account is never gated and never charged below.
+    if (user.unlimitedGames) unlimited = true;
+    else if (user.remainingGames < 1) {
       return res.status(402).json({ error: 'لا يوجد لديك ألعاب متبقية، يرجى شراء باقة جديدة' });
     }
   }
@@ -71,7 +75,7 @@ router.post('/', requireAuth, async (req: AuthedRequest, res) => {
   if (categories.length === 0) return res.status(400).json({ error: 'يرجى اختيار الفئات' });
 
   const game = await prisma.$transaction(async (tx) => {
-    if (costsCredit) {
+    if (costsCredit && !unlimited) {
       await tx.user.update({ where: { id: req.userId! }, data: { remainingGames: { decrement: 1 } } });
     }
 

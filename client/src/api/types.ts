@@ -3,6 +3,8 @@ export interface User {
   name: string;
   role: 'USER' | 'ADMIN';
   remainingGames: number;
+  /** Never spends a credit — the counter is shown as ∞ rather than a number. */
+  unlimitedGames?: boolean;
   createdAt: string;
 }
 

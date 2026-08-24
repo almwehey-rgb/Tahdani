@@ -53,7 +53,7 @@ export default function Layout() {
             {user ? (
               <>
                 <span className="hidden sm:inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-full bg-[var(--color-surface-hi)] text-[var(--color-gold)]">
-                  🎮 {user.remainingGames}
+                  🎮 {user.unlimitedGames ? '∞' : user.remainingGames}
                 </span>
                 <Link to="/account" className="btn btn-ghost !py-2 !px-3 text-sm">{user.name}</Link>
               </>
