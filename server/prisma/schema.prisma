@@ -101,7 +101,7 @@ model Category {
   icon      String   @default("🎯")
   color     String   @default("#6C4CE0")
   imageUrl  String? // cover photo shown on the category card
-  type      String   @default("PERMANENT") // PERMANENT | SEASONAL | KIDS | DRAWING | STUDENT
+  type      String   @default("PERMANENT") // PERMANENT | SEASONAL | KIDS | DRAWING | STUDENT | LIST
   seasonTag String? // e.g. RAMADAN_2026
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
