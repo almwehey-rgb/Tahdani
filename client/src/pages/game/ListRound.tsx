@@ -482,9 +482,42 @@ export default function ListRound() {
         })}
       </div>
 
+      {traps.length > 0 && (
+        <div className="card p-4 mb-4" style={{ borderColor: 'var(--color-danger)' }}>
+          <p className="text-center font-bold text-sm mb-1" style={{ color: 'var(--color-danger)' }}>
+            💣 حقل الألغام
+          </p>
+          <p className="text-center text-xs text-[var(--color-ink-faint)] mb-3">
+            إذا قال الفريق إجابة يشوفها الحكم مفخّخة، اضغط هنا — تنخصم منهم وينتقل الدور.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {traps.map((t, i) => {
+              const sprung = revealed[t.id] !== undefined;
+              // With more than one trap the buttons are otherwise identical, so
+              // they are numbered to match the judge's sheet — the judge can say
+              // "الفخ الثاني" and the host presses the right one.
+              const label = sprung ? t.text : traps.length > 1 ? `فخ ${i + 1}` : 'وقعوا بالفخ';
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => springTrap(t.id, t.points)}
+                  disabled={sprung}
+                  className="rounded-xl px-3 py-2 border font-bold text-sm transition-colors disabled:opacity-50"
+                  style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)' }}
+                >
+                  {/* the trap's text stays hidden until it is walked into —
+                      only the judge's sheet reveals it beforehand */}
+                  💣 {label} −{t.points}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="card p-4 mb-4">
         <p className="text-center font-bold text-sm text-[var(--color-ink-faint)] mb-3">الإجابات</p>
-        <div className="grid sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           {columns.map((col, ci) => (
             <div key={ci} className="flex flex-col gap-2">
               {col.map((a, ri) => {
@@ -497,18 +530,18 @@ export default function ListRound() {
                     key={a.id}
                     onClick={() => reveal(a.id, a.points)}
                     disabled={found}
-                    className={`flex items-center gap-2 rounded-xl px-2 py-2.5 border transition-colors ${
+                    className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-1.5 sm:px-2 py-2.5 border transition-colors ${
                       found ? 'border-transparent' : 'border-[var(--color-border)] hover:bg-[var(--color-tile-hover)]'
                     }`}
                     style={found ? { background: `${teams[byIndex].color}22`, borderColor: teams[byIndex].color } : undefined}
                   >
-                    <span className="w-7 h-7 shrink-0 rounded-lg grid place-items-center text-xs font-extrabold bg-[var(--color-bg-soft)]">
+                    <span className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 rounded-lg grid place-items-center text-[10px] sm:text-xs font-extrabold bg-[var(--color-bg-soft)]">
                       {slot}
                     </span>
                     <span className="flex-1 min-w-0 truncate text-start font-bold">
                       {found ? a.text : showHint ? `${a.text.trim().charAt(0)} …` : '؟ ؟ ؟ ؟ ؟'}
                     </span>
-                    <span className="shrink-0 font-extrabold tabular-nums text-sm">+{a.points}</span>
+                    <span className="shrink-0 font-extrabold tabular-nums text-[11px] sm:text-sm">+{a.points}</span>
                   </button>
                 );
               })}
@@ -517,34 +550,6 @@ export default function ListRound() {
         </div>
       </div>
 
-      {traps.length > 0 && (
-        <div className="card p-4 mb-4" style={{ borderColor: 'var(--color-danger)' }}>
-          <p className="text-center font-bold text-sm mb-1" style={{ color: 'var(--color-danger)' }}>
-            💣 حقل الألغام
-          </p>
-          <p className="text-center text-xs text-[var(--color-ink-faint)] mb-3">
-            إذا قال الفريق إجابة يشوفها الحكم مفخّخة، اضغط هنا — تنخصم منهم وينتقل الدور.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {traps.map((t) => {
-              const sprung = revealed[t.id] !== undefined;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => springTrap(t.id, t.points)}
-                  disabled={sprung}
-                  className="rounded-xl px-3 py-2 border font-bold text-sm transition-colors disabled:opacity-50"
-                  style={{ borderColor: 'var(--color-danger)', color: 'var(--color-danger)' }}
-                >
-                  {/* the trap's text stays hidden until it is walked into —
-                      only the judge's sheet reveals it beforehand */}
-                  💣 {sprung ? t.text : 'وقعوا بالفخ'} −{t.points}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <div className="flex justify-between gap-2">
         <button className="btn btn-ghost" onClick={() => navigate('/list')}>إنهاء الجولة</button>
