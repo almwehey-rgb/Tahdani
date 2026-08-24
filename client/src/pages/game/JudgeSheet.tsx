@@ -168,6 +168,16 @@ export default function JudgeSheet() {
                   >
                     {i + 1}
                   </span>
+                  {a.imageUrl && (
+                    // In an acting round the picture is what the actor works
+                    // from, so it sits with the word rather than replacing it.
+                    <img
+                      src={a.imageUrl}
+                      alt=""
+                      loading="lazy"
+                      className="w-14 h-14 shrink-0 rounded-lg object-cover border border-[var(--color-border)]"
+                    />
+                  )}
                   <p className="font-bold flex-1 min-w-0">{a.text}</p>
                   <span className="font-black shrink-0" style={{ color: 'var(--color-gold)' }}>
                     +{a.points}

@@ -144,6 +144,8 @@ model QuestionAnswer {
   // A trap is not one of the hidden slots: it looks like a right answer but
   // sits outside the top ten, and saying it deducts `points` instead.
   isTrap     Boolean  @default(false)
+  // Picture of this item, for acting rounds where a photo beats a word.
+  imageUrl   String?
   sortOrder  Int      @default(0)
 }
 
