@@ -1,7 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../db';
 import { requireAuth, requireAdmin, AuthedRequest } from '../middleware/auth';
+
+// Prisma needs its own JsonNull sentinel to actually clear a Json? column —
+// a plain `null` there means "field not provided," not "set it to null."
+function jsonOrNull<T>(value: T | null | undefined) {
+  return value === null ? Prisma.JsonNull : value;
+}
 
 const router = Router();
 
@@ -51,6 +58,9 @@ router.get('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
   res.json({ questions });
 });
 
+const ladderAnswerSchema = z.object({ points: z.number().int().positive(), answer: z.string().min(1) });
+const mineSchema = z.object({ points: z.number().int().negative(), answer: z.string().min(1), reason: z.string().optional().nullable() });
+
 const questionSchema = z.object({
   categoryId: z.string(),
   text: z.string().min(2),
@@ -64,19 +74,27 @@ const questionSchema = z.object({
   grayscale: z.boolean().default(false),
   points: z.number().int().min(50).max(1000).default(200),
   isDrawing: z.boolean().default(false),
+  // DANGER rounds only ("خطر ونقاط"): 7 ranked answers + 3 decoy mines.
+  ladderAnswers: z.array(ladderAnswerSchema).length(7).optional().nullable(),
+  mines: z.array(mineSchema).length(3).optional().nullable(),
 });
 
 router.post('/:id/questions', requireAuth, requireAdmin, async (req, res) => {
   const parsed = questionSchema.safeParse({ ...req.body, categoryId: req.params.id });
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
-  const question = await prisma.question.create({ data: parsed.data });
+  const question = await prisma.question.create({
+    data: { ...parsed.data, ladderAnswers: jsonOrNull(parsed.data.ladderAnswers), mines: jsonOrNull(parsed.data.mines) },
+  });
   res.status(201).json({ question });
 });
 
 router.put('/questions/:qid', requireAuth, requireAdmin, async (req: AuthedRequest, res) => {
   const parsed = questionSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
-  const question = await prisma.question.update({ where: { id: req.params.qid }, data: parsed.data });
+  const question = await prisma.question.update({
+    where: { id: req.params.qid },
+    data: { ...parsed.data, ladderAnswers: jsonOrNull(parsed.data.ladderAnswers), mines: jsonOrNull(parsed.data.mines) },
+  });
   res.json({ question });
 });
 

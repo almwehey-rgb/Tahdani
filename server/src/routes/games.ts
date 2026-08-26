@@ -92,7 +92,10 @@ router.post('/', requireAuth, async (req: AuthedRequest, res) => {
 
     for (const category of categories) {
       await tx.gameCategory.create({ data: { gameId: createdGame.id, categoryId: category.id } });
-      for (const question of pickBoardQuestions(category.questions)) {
+      // DANGER rounds aren't 200/400/600 tiles to sample from — each question
+      // *is* a whole round, so every one of them goes on the board as-is.
+      const boardQuestions = category.type === 'DANGER' ? category.questions : pickBoardQuestions(category.questions);
+      for (const question of boardQuestions) {
         await tx.gameQuestion.create({ data: { gameId: createdGame.id, questionId: question.id } });
       }
     }
@@ -118,6 +121,7 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
     categoryId: gq.question.categoryId,
     points: gq.question.points,
     isDrawing: gq.question.isDrawing,
+    isDanger: gq.question.ladderAnswers != null,
     isOpened: gq.isOpened,
     answeredByTeamId: gq.answeredByTeamId,
     isCorrect: gq.isCorrect,
@@ -133,6 +137,10 @@ router.get('/:id/board', requireAuth, async (req: AuthedRequest, res) => {
           imageUrl: gq.question.imageUrl,
           videoUrl: gq.question.videoUrl,
           grayscale: gq.question.grayscale,
+          ladderAnswers: gq.question.ladderAnswers,
+          mines: gq.question.mines,
+          revealedLadder: gq.revealedLadder,
+          revealedMines: gq.revealedMines,
         }
       : {}),
   }));
@@ -168,6 +176,10 @@ router.post('/:id/questions/:gqId/open', requireAuth, async (req: AuthedRequest,
       grayscale: gq.question.grayscale,
       points: gq.question.points,
       isDrawing: gq.question.isDrawing,
+      ladderAnswers: gq.question.ladderAnswers,
+      mines: gq.question.mines,
+      revealedLadder: gq.revealedLadder,
+      revealedMines: gq.revealedMines,
     },
   });
 });
@@ -252,8 +264,98 @@ router.post('/:id/questions/:gqId/undo', requireAuth, async (req: AuthedRequest,
       grayscale: gq.question.grayscale,
       points: gq.question.points,
       isDrawing: gq.question.isDrawing,
+      ladderAnswers: gq.question.ladderAnswers,
+      mines: gq.question.mines,
+      revealedLadder: gq.revealedLadder,
+      revealedMines: gq.revealedMines,
     },
   });
+});
+
+type LadderAnswer = { points: number; answer: string };
+type Mine = { points: number; answer: string; reason?: string | null };
+type RevealedEntry = { index: number; teamId: string };
+
+const dangerRevealSchema = z.object({
+  kind: z.enum(['ladder', 'mine']),
+  index: z.number().int().min(0),
+  teamId: z.string(),
+});
+
+// DANGER rounds ("خطر ونقاط"): the host reveals one ladder rung or mine at a
+// time as the answering team calls it out, crediting/penalizing whichever
+// team said it — unlike /answer this can fire several times per question.
+router.post('/:id/questions/:gqId/danger-reveal', requireAuth, async (req: AuthedRequest, res) => {
+  const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+  const parsed = dangerRevealSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
+  const { kind, index, teamId } = parsed.data;
+
+  const gq = await prisma.gameQuestion.findUnique({ where: { id: req.params.gqId }, include: { question: true } });
+  if (!gq) return res.status(404).json({ error: 'السؤال غير موجود' });
+  const team = await prisma.team.findFirst({ where: { id: teamId, gameId: game.id } });
+  if (!team) return res.status(404).json({ error: 'الفريق غير موجود' });
+
+  const entries = (kind === 'ladder' ? gq.question.ladderAnswers : gq.question.mines) as (LadderAnswer | Mine)[] | null;
+  if (!entries || !entries[index]) return res.status(400).json({ error: 'هذا السؤال ليس من نوع خطر ونقاط' });
+
+  const revealedField = kind === 'ladder' ? 'revealedLadder' : 'revealedMines';
+  const revealed = gq[revealedField] as unknown as RevealedEntry[];
+  if (revealed.some((r) => r.index === index)) return res.status(400).json({ error: 'تم الكشف عن هذه الإجابة من قبل' });
+
+  const delta = entries[index].points;
+  const newScore = Math.max(0, team.score + delta);
+
+  const [updatedTeam, updatedGq] = await prisma.$transaction([
+    prisma.team.update({ where: { id: team.id }, data: { score: newScore } }),
+    prisma.gameQuestion.update({
+      where: { id: gq.id },
+      data: { [revealedField]: [...revealed, { index, teamId }] },
+    }),
+  ]);
+
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } });
+  res.json({
+    teams,
+    revealedLadder: updatedGq.revealedLadder,
+    revealedMines: updatedGq.revealedMines,
+    team: updatedTeam,
+  });
+});
+
+const dangerUndoSchema = z.object({ kind: z.enum(['ladder', 'mine']), index: z.number().int().min(0) });
+
+router.delete('/:id/questions/:gqId/danger-reveal', requireAuth, async (req: AuthedRequest, res) => {
+  const game = await prisma.game.findFirst({ where: { id: req.params.id, userId: req.userId } });
+  if (!game) return res.status(404).json({ error: 'اللعبة غير موجودة' });
+  const parsed = dangerUndoSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
+  const { kind, index } = parsed.data;
+
+  const gq = await prisma.gameQuestion.findUnique({ where: { id: req.params.gqId }, include: { question: true } });
+  if (!gq) return res.status(404).json({ error: 'السؤال غير موجود' });
+
+  const entries = (kind === 'ladder' ? gq.question.ladderAnswers : gq.question.mines) as (LadderAnswer | Mine)[] | null;
+  const revealedField = kind === 'ladder' ? 'revealedLadder' : 'revealedMines';
+  const revealed = gq[revealedField] as unknown as RevealedEntry[];
+  const entry = revealed.find((r) => r.index === index);
+  if (!entries || !entry) return res.status(400).json({ error: 'ما فيه شي نرجعه هنا' });
+
+  const team = await prisma.team.findFirst({ where: { id: entry.teamId, gameId: game.id } });
+  const delta = entries[index].points;
+  const newScore = team ? Math.max(0, team.score - delta) : undefined;
+
+  await prisma.$transaction([
+    ...(team ? [prisma.team.update({ where: { id: team.id }, data: { score: newScore! } })] : []),
+    prisma.gameQuestion.update({
+      where: { id: gq.id },
+      data: { [revealedField]: revealed.filter((r) => r.index !== index) },
+    }),
+  ]);
+
+  const teams = await prisma.team.findMany({ where: { gameId: game.id }, include: { players: true, lifelines: true }, orderBy: { id: 'asc' } });
+  res.json({ teams });
 });
 
 const useLifelineSchema = z.object({ gameQuestionId: z.string().optional() });

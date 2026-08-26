@@ -114,11 +114,28 @@ export interface Team {
   lifelines: TeamLifeline[];
 }
 
+export interface LadderAnswer {
+  points: number;
+  answer: string;
+}
+
+export interface Mine {
+  points: number;
+  answer: string;
+  reason?: string | null;
+}
+
+export interface RevealedEntry {
+  index: number;
+  teamId: string;
+}
+
 export interface GameTile {
   gameQuestionId: string;
   categoryId: string;
   points: number;
   isDrawing: boolean;
+  isDanger: boolean;
   isOpened: boolean;
   answeredByTeamId: string | null;
   isCorrect: boolean | null;
@@ -132,6 +149,10 @@ export interface GameTile {
   imageUrl?: string | null;
   videoUrl?: string | null;
   grayscale?: boolean;
+  ladderAnswers?: LadderAnswer[] | null;
+  mines?: Mine[] | null;
+  revealedLadder?: RevealedEntry[];
+  revealedMines?: RevealedEntry[];
 }
 
 export interface Game {

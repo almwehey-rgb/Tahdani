@@ -71,6 +71,9 @@ export default function Board() {
   const [pickedPlayer, setPickedPlayer] = useState<string | null>(null);
   const [trapTargetIndex, setTrapTargetIndex] = useState<number | null>(null);
   const [doublePointsActive, setDoublePointsActive] = useState(false);
+  // Which DANGER ladder rung / mine currently has its team-picker expanded.
+  const [dangerPicker, setDangerPicker] = useState<{ kind: 'ladder' | 'mine'; index: number } | null>(null);
+  const [dangerBusy, setDangerBusy] = useState(false);
   // Extra teams the host ruled correct on the current question, alongside
   // whichever team they finally tap to score it.
   const [sharedCorrectTeamIds, setSharedCorrectTeamIds] = useState<string[]>([]);
@@ -279,6 +282,45 @@ export default function Board() {
       setBoard((prev) => (prev ? { ...prev, teams: previousTeams, tiles: previousTiles } : prev));
       setTurn(previousTurn);
       toast.error(apiErrorMessage(err));
+    }
+  }
+
+  // DANGER rounds ("خطر ونقاط"): a rung/mine can fire many times over the
+  // life of one open question, unlike markAnswer which closes it in one shot.
+  async function revealDangerItem(kind: 'ladder' | 'mine', index: number, teamId: string) {
+    if (!openTile || dangerBusy) return;
+    setDangerBusy(true);
+    try {
+      const { data } = await api.post(`/games/${id}/questions/${openTile.gameQuestionId}/danger-reveal`, { kind, index, teamId });
+      setDangerPicker(null);
+      setOpenTile((prev) => (prev ? { ...prev, revealedLadder: data.revealedLadder, revealedMines: data.revealedMines } : prev));
+      setBoard((prev) => (prev ? { ...prev, teams: data.teams } : prev));
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setDangerBusy(false);
+    }
+  }
+
+  async function undoDangerItem(kind: 'ladder' | 'mine', index: number) {
+    if (!openTile || dangerBusy) return;
+    setDangerBusy(true);
+    try {
+      const { data } = await api.delete(`/games/${id}/questions/${openTile.gameQuestionId}/danger-reveal`, { data: { kind, index } });
+      setOpenTile((prev) =>
+        prev
+          ? {
+              ...prev,
+              revealedLadder: kind === 'ladder' ? (prev.revealedLadder || []).filter((r) => r.index !== index) : prev.revealedLadder,
+              revealedMines: kind === 'mine' ? (prev.revealedMines || []).filter((r) => r.index !== index) : prev.revealedMines,
+            }
+          : prev,
+      );
+      setBoard((prev) => (prev ? { ...prev, teams: data.teams } : prev));
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setDangerBusy(false);
     }
   }
 
@@ -508,7 +550,7 @@ export default function Board() {
               }}
             >
               {tile.isDrawing && '🎨 '}
-              {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.points}
+              {tile.answeredByTeamId ? (tile.isCorrect ? '✔' : '—') : tile.isDanger ? '⚠️' : tile.points}
               {tile.usedVar && <span className="absolute top-1 left-1 text-xs">🚩</span>}
             </button>
           );
@@ -565,7 +607,115 @@ export default function Board() {
                 </span>
               </div>
 
-              {openTile.isDrawing ? (
+              {openTile.isDanger ? (
+                <div className="shrink-0 py-2">
+                  <p className="text-xl sm:text-2xl font-bold text-center leading-relaxed mb-5">{openTile.text}</p>
+
+                  <p className="text-sm font-bold text-[var(--color-ink-dim)] mb-2">🪜 الإجابات (من الأسهل للأصعب)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+                    {(openTile.ladderAnswers || [])
+                      .map((rung, index) => ({ rung, index }))
+                      .sort((a, b) => a.rung.points - b.rung.points)
+                      .map(({ rung, index }) => {
+                        const revealed = openTile.revealedLadder?.find((r) => r.index === index);
+                        const team = revealed ? board?.teams.find((t) => t.id === revealed.teamId) : undefined;
+                        const pickerOpen = dangerPicker?.kind === 'ladder' && dangerPicker.index === index;
+                        return (
+                          <div key={index} className="rounded-xl border p-3" style={{ borderColor: revealed ? team?.color || 'var(--color-border)' : 'var(--color-border)' }}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-black text-lg shrink-0">+{rung.points}</span>
+                              {revealed ? (
+                                <>
+                                  <span className="flex-1 font-bold text-center">{rung.answer}</span>
+                                  <span className="text-xs font-bold shrink-0" style={{ color: team?.color }}>
+                                    {team?.name}
+                                  </span>
+                                  <button className="text-xs text-[var(--color-ink-faint)] shrink-0" onClick={() => undoDangerItem('ladder', index)} disabled={dangerBusy}>
+                                    ↩
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  className="btn btn-ghost !py-1.5 !px-3 text-sm flex-1"
+                                  onClick={() => setDangerPicker(pickerOpen ? null : { kind: 'ladder', index })}
+                                >
+                                  🔒 كشف
+                                </button>
+                              )}
+                            </div>
+                            {pickerOpen && (
+                              <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-[var(--color-border)]">
+                                {board?.teams.map((t) => (
+                                  <button
+                                    key={t.id}
+                                    className="px-2.5 py-1 rounded-full text-xs font-bold border-2"
+                                    style={{ borderColor: t.color, color: t.color }}
+                                    disabled={dangerBusy}
+                                    onClick={() => revealDangerItem('ladder', index, t.id)}
+                                  >
+                                    {t.name}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <p className="text-sm font-bold text-[var(--color-danger)] mb-2">🧨 الألغام (تخصم نقاط)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {(openTile.mines || []).map((mine, index) => {
+                      const revealed = openTile.revealedMines?.find((r) => r.index === index);
+                      const team = revealed ? board?.teams.find((t) => t.id === revealed.teamId) : undefined;
+                      const pickerOpen = dangerPicker?.kind === 'mine' && dangerPicker.index === index;
+                      return (
+                        <div key={index} className="rounded-xl border p-3" style={{ borderColor: revealed ? team?.color || 'var(--color-danger)' : 'var(--color-danger)' }}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-black text-lg shrink-0" style={{ color: 'var(--color-danger)' }}>
+                              {mine.points}
+                            </span>
+                            {revealed ? (
+                              <>
+                                <span className="flex-1 font-bold text-center text-sm">{mine.answer}</span>
+                                <span className="text-xs font-bold shrink-0" style={{ color: team?.color }}>
+                                  {team?.name}
+                                </span>
+                                <button className="text-xs text-[var(--color-ink-faint)] shrink-0" onClick={() => undoDangerItem('mine', index)} disabled={dangerBusy}>
+                                  ↩
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="btn btn-ghost !py-1.5 !px-3 text-sm flex-1"
+                                onClick={() => setDangerPicker(pickerOpen ? null : { kind: 'mine', index })}
+                              >
+                                🧨 فخ
+                              </button>
+                            )}
+                          </div>
+                          {revealed && mine.reason && <p className="text-xs text-[var(--color-ink-faint)] mt-1">{mine.reason}</p>}
+                          {pickerOpen && (
+                            <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-[var(--color-border)]">
+                              {board?.teams.map((t) => (
+                                <button
+                                  key={t.id}
+                                  className="px-2.5 py-1 rounded-full text-xs font-bold border-2"
+                                  style={{ borderColor: t.color, color: t.color }}
+                                  disabled={dangerBusy}
+                                  onClick={() => revealDangerItem('mine', index, t.id)}
+                                >
+                                  {t.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : openTile.isDrawing ? (
                 <>
                   <p className="text-center text-base sm:text-lg text-[var(--color-ink-dim)] mb-2 shrink-0">كلمة الرسم (لأعضاء الفريق الراسم فقط)</p>
                   <p className="text-center text-3xl sm:text-5xl font-black mb-4 shrink-0">{showAnswer ? openTile.answer : '•••••'}</p>
@@ -639,83 +789,94 @@ export default function Board() {
                 </>
               )}
 
-              <div className="flex flex-wrap gap-3 justify-center mb-4 shrink-0">
-                {activeTeam.lifelines
-                  .filter((l) => !l.used)
-                  .map((l) => (
-                    <button key={l.id} className="btn btn-ghost !py-2.5 !px-4 text-base sm:text-lg" onClick={() => useLifeline(l.type)}>
-                      {LIFELINE_LABELS[l.type].icon} {LIFELINE_LABELS[l.type].label}
-                    </button>
-                  ))}
-                {tileHints.length > 0 &&
-                  (() => {
-                    const shownCount = Math.max(revealedHints, 1);
-                    return (
-                      <div className="w-full flex flex-col items-center gap-3 mt-1">
-                        {tileHints.slice(0, shownCount).map((h, i) => (
-                          <span key={i} className="text-xl sm:text-2xl md:text-3xl font-semibold leading-snug text-[var(--color-ink-dim)] text-center">
-                            💡 {h}
-                          </span>
-                        ))}
-                        {shownCount < tileHints.length && (
-                          <button
-                            type="button"
-                            className="btn btn-ghost !py-2 !px-5 text-base sm:text-lg mt-1"
-                            onClick={() => setRevealedHints(shownCount + 1)}
-                          >
-                            الهنت التالي ▶
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })()}
-              </div>
-
-              {/* With more than two teams an answer can legitimately be right
-                  for several of them, so the host can tick the extras first
-                  and then tap whichever team scores it. */}
-              {board.teams.length > 2 && (
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-2 shrink-0">
-                  <span className="text-sm text-[var(--color-ink-faint)]">جاوبوا صح معهم:</span>
-                  {board.teams.map((team) => {
-                    const picked = sharedCorrectTeamIds.includes(team.id);
-                    return (
-                      <button
-                        key={team.id}
-                        className="px-3 py-1.5 rounded-full text-sm font-bold border-2 transition-colors"
-                        style={{
-                          borderColor: team.color,
-                          background: picked ? team.color : 'transparent',
-                          color: picked ? '#fff' : team.color,
-                        }}
-                        onClick={() =>
-                          setSharedCorrectTeamIds((prev) =>
-                            prev.includes(team.id) ? prev.filter((t) => t !== team.id) : [...prev, team.id],
-                          )
-                        }
-                      >
-                        {picked ? '✔ ' : '+ '}
-                        {team.name}
+              {!openTile.isDanger && (
+                <div className="flex flex-wrap gap-3 justify-center mb-4 shrink-0">
+                  {activeTeam.lifelines
+                    .filter((l) => !l.used)
+                    .map((l) => (
+                      <button key={l.id} className="btn btn-ghost !py-2.5 !px-4 text-base sm:text-lg" onClick={() => useLifeline(l.type)}>
+                        {LIFELINE_LABELS[l.type].icon} {LIFELINE_LABELS[l.type].label}
                       </button>
-                    );
-                  })}
+                    ))}
+                  {tileHints.length > 0 &&
+                    (() => {
+                      const shownCount = Math.max(revealedHints, 1);
+                      return (
+                        <div className="w-full flex flex-col items-center gap-3 mt-1">
+                          {tileHints.slice(0, shownCount).map((h, i) => (
+                            <span key={i} className="text-xl sm:text-2xl md:text-3xl font-semibold leading-snug text-[var(--color-ink-dim)] text-center">
+                              💡 {h}
+                            </span>
+                          ))}
+                          {shownCount < tileHints.length && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost !py-2 !px-5 text-base sm:text-lg mt-1"
+                              onClick={() => setRevealedHints(shownCount + 1)}
+                            >
+                              الهنت التالي ▶
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
-                {board.teams.map((team) => (
-                  <button
-                    key={team.id}
-                    className="btn btn-primary text-lg sm:text-xl !py-3.5"
-                    style={{ background: team.color }}
-                    onClick={() => markAnswer(team.id)}
-                  >
-                    ✔ {team.name} جاوب صح
+
+              {!openTile.isDanger && (
+                <>
+                  {/* With more than two teams an answer can legitimately be right
+                      for several of them, so the host can tick the extras first
+                      and then tap whichever team scores it. */}
+                  {board.teams.length > 2 && (
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-2 shrink-0">
+                      <span className="text-sm text-[var(--color-ink-faint)]">جاوبوا صح معهم:</span>
+                      {board.teams.map((team) => {
+                        const picked = sharedCorrectTeamIds.includes(team.id);
+                        return (
+                          <button
+                            key={team.id}
+                            className="px-3 py-1.5 rounded-full text-sm font-bold border-2 transition-colors"
+                            style={{
+                              borderColor: team.color,
+                              background: picked ? team.color : 'transparent',
+                              color: picked ? '#fff' : team.color,
+                            }}
+                            onClick={() =>
+                              setSharedCorrectTeamIds((prev) =>
+                                prev.includes(team.id) ? prev.filter((t) => t !== team.id) : [...prev, team.id],
+                              )
+                            }
+                          >
+                            {picked ? '✔ ' : '+ '}
+                            {team.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
+                    {board.teams.map((team) => (
+                      <button
+                        key={team.id}
+                        className="btn btn-primary text-lg sm:text-xl !py-3.5"
+                        style={{ background: team.color }}
+                        onClick={() => markAnswer(team.id)}
+                      >
+                        ✔ {team.name} جاوب صح
+                      </button>
+                    ))}
+                  </div>
+                  <button className="btn btn-ghost w-full mb-2 text-base sm:text-lg !py-3 shrink-0" onClick={() => markAnswer(null)}>
+                    لا أحد جاوب / اللي بعده
                   </button>
-                ))}
-              </div>
-              <button className="btn btn-ghost w-full mb-2 text-base sm:text-lg !py-3 shrink-0" onClick={() => markAnswer(null)}>
-                لا أحد جاوب / اللي بعده
-              </button>
+                </>
+              )}
+              {openTile.isDanger && (
+                <button className="btn btn-primary w-full mb-2 text-base sm:text-lg !py-3 shrink-0" onClick={() => markAnswer(null)}>
+                  ✅ إنهاء الجولة والانتقال للفريق التالي
+                </button>
+              )}
               <button className="text-sm sm:text-base text-[var(--color-ink-faint)] w-full text-center shrink-0" onClick={() => setVarOpen((v) => !v)}>
                 🚩 ساعدنا في تعديل الخطأ (VAR)
               </button>

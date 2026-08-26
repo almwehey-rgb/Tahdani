@@ -127,6 +127,13 @@ model Question {
   isDrawing  Boolean  @default(false)
   createdAt  DateTime @default(now())
 
+  // DANGER category rounds only ("خطر ونقاط" / minefield): `text` holds the
+  // one main prompt, and instead of a single `answer` the round has a ladder
+  // of ranked sub-answers plus a few decoy "mines" the host penalizes teams
+  // for saying. Null for every other category type.
+  ladderAnswers Json? // [{ points: 100..700, answer: string }] climbing 7 rungs
+  mines         Json? // [{ points: -100/-200/-300, answer: string, reason?: string }]
+
   gameQuestions GameQuestion[]
   varReports    VarReport[]
 }
@@ -210,6 +217,12 @@ model GameQuestion {
   alsoCorrectTeamIds String[] @default([])
   isOpened       Boolean   @default(false)
   usedVar        Boolean   @default(false)
+
+  // DANGER rounds: which ladder rungs/mines have already been revealed and
+  // which team was credited/penalized for each, so a rung or mine can only
+  // fire once. [{ index: 0..6 or 0..2, teamId: string }]
+  revealedLadder Json      @default("[]")
+  revealedMines  Json      @default("[]")
 }
 
 // ---------- Tournaments ----------
