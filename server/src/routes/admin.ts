@@ -51,6 +51,18 @@ router.get('/users', async (req, res) => {
   res.json({ users });
 });
 
+// Deleting a category only flips `active`, and every read filters on it — so a
+// deleted category vanishes from the admin panel too, with nothing left to
+// click. This is the one place it can still be seen and put back.
+router.get('/categories', async (req, res) => {
+  const categories = await prisma.category.findMany({
+    where: req.query.inactive === '1' ? { active: false } : {},
+    orderBy: [{ active: 'asc' }, { name: 'asc' }],
+    include: { _count: { select: { questions: true } } },
+  });
+  res.json({ categories });
+});
+
 // Editing a user was only possible by running a script against the database,
 // which is no way to hand someone unlimited games or top up their balance.
 const userPatchSchema = z.object({
