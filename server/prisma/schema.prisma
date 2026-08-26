@@ -24,6 +24,21 @@ model User {
   giftsRedeemed GiftCode[]      @relation("GiftRedeemer")
   games         Game[]
   tournaments   Tournament[]
+  favorites     FavoriteCategory[]
+}
+
+// One person's starred categories — a shortcut through six hundred of them.
+model FavoriteCategory {
+  id         String   @id @default(cuid())
+  userId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+  @@index([userId])
 }
 
 // Singleton row (id is always "singleton") holding the one shared access
@@ -110,6 +125,7 @@ model Category {
 
   questions     Question[]
   gameCategories GameCategory[]
+  favorites      FavoriteCategory[]
 }
 
 model Question {

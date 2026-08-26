@@ -26,6 +26,7 @@ const SELECTABLE_LIFELINE_TYPES: LifelineType[] = ['PHONE_A_FRIEND', 'STEAL_POIN
 // category can appear under more than one, and chips with no matches are
 // hidden, so this stays correct as categories are added.
 const CATEGORY_GROUPS: { label: string; match: RegExp }[] = [
+  { label: '⭐ المفضلة', match: /(?:)/ }, // handled specially below
   { label: 'فيها أسئلة', match: /(?:)/ }, // handled specially below
   { label: 'كرة قدم', match: /كرة|الكرة|دوري|كأس|مونديال|لاعب|هدف|مدرب|نادي|منتخب|FUT|أندية/ },
   { label: 'فن وأغاني', match: /أغاني|اغاني|أغنية|فنان|فن |مسرحي|طرب/ },
@@ -59,6 +60,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [categorySearch, setCategorySearch] = useState('');
   const [activeGroup, setActiveGroup] = useState('الكل');
 
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
 
@@ -79,7 +81,19 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
         setCategories(cats);
       })
       .finally(() => setLoadingCats(false));
+    // A failure here just means no stars — never a blocked wizard.
+    api.get('/categories/favorites').then(({ data }) => setFavorites(data.categoryIds)).catch(() => {});
   }, [mode]);
+
+  function toggleFavorite(id: string) {
+    const on = favorites.includes(id);
+    setFavorites((prev) => (on ? prev.filter((f) => f !== id) : [...prev, id]));
+    const call = on ? api.delete(`/categories/${id}/favorite`) : api.put(`/categories/${id}/favorite`);
+    call.catch(() => {
+      setFavorites((prev) => (on ? [...prev, id] : prev.filter((f) => f !== id)));
+      toast.error('تعذر حفظ المفضلة');
+    });
+  }
 
   function updateTeam(idx: number, patch: Partial<WizardTeam>) {
     setTeams((prev) => prev.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
@@ -188,6 +202,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
 
   function matchesGroup(c: Category, label: string) {
     if (label === 'الكل') return true;
+    if (label === '⭐ المفضلة') return favorites.includes(c.id);
     if (label === 'فيها أسئلة') return (c._count?.questions ?? 0) > 0;
     const group = CATEGORY_GROUPS.find((g) => g.label === label);
     return group ? group.match.test(c.name) : true;
@@ -201,12 +216,14 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
       if (count > 0) chips.push({ label: g.label, count });
     }
     return chips;
-  }, [categories]);
+  }, [categories, favorites]);
 
   const visibleCategories = useMemo(() => {
     const q = categorySearch.trim();
     return categories.filter((c) => c.name.includes(q) && matchesGroup(c, activeGroup));
-  }, [categories, categorySearch, activeGroup]);
+    // favorites belongs here: matchesGroup reads it for the ⭐ chip, so without
+    // it the filtered list keeps showing a category you just un-starred.
+  }, [categories, categorySearch, activeGroup, favorites]);
 
   const readyForClassicSubmit = useMemo(
     () => teams.every((t) => (lifelines[teams.indexOf(t)] || []).length === 3),
@@ -406,9 +423,23 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                       >
                         i
                       </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        title={favorites.includes(c.id) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(c.id);
+                        }}
+                        className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-black/45 backdrop-blur-sm text-xs flex items-center justify-center ${
+                          favorites.includes(c.id) ? 'text-[var(--color-gold)]' : 'text-white/60'
+                        }`}
+                      >
+                        {favorites.includes(c.id) ? '★' : '☆'}
+                      </span>
                       {selected && (
                         <span
-                          className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm text-white"
+                          className="absolute bottom-14 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm text-white"
                           style={{ background: c.color }}
                         >
                           ✔
