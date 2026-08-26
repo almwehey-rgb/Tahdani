@@ -12,7 +12,7 @@ export interface Category {
   icon: string;
   color: string;
   imageUrl?: string | null;
-  type: 'PERMANENT' | 'SEASONAL' | 'KIDS' | 'DRAWING' | 'STUDENT';
+  type: 'PERMANENT' | 'SEASONAL' | 'KIDS' | 'DRAWING' | 'STUDENT' | 'DANGER';
   seasonTag?: string | null;
   active: boolean;
   _count?: { questions: number };

@@ -44,7 +44,7 @@ const TEAM_ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الراب
 const TEAM_NAME_DEFAULTS = ['الفريق الأول', 'الفريق الثاني', 'الفريق الثالث', 'الفريق الرابع'];
 const MAX_TEAMS = 4;
 
-export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
+export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' | 'DANGER' }) {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const [step, setStep] = useState<'teams' | 'categories' | 'lifelines'>('teams');
@@ -62,8 +62,12 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
 
-  const categoryType = mode === 'KIDS' ? 'KIDS' : undefined;
-  const requiredCategoryCount = mode === 'KIDS' ? 1 : 6;
+  // DANGER (فئة "خطر ونقاط") is a single-category quick-play shortcut just
+  // like KIDS, but it still plays as a normal CLASSIC game server-side —
+  // Game.mode only distinguishes credit cost and STUDENT's separate flow.
+  const categoryType = mode === 'KIDS' ? 'KIDS' : mode === 'DANGER' ? 'DANGER' : undefined;
+  const requiredCategoryCount = mode === 'KIDS' || mode === 'DANGER' ? 1 : 6;
+  const serverMode = mode === 'DANGER' ? 'CLASSIC' : mode;
 
   useEffect(() => {
     setLoadingCats(true);
@@ -121,7 +125,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   function goCategories() {
     const err = validateTeams();
     if (err) return toast.error(err);
-    if (mode === 'KIDS' && categories.length > 0) {
+    if ((mode === 'KIDS' || mode === 'DANGER') && categories.length > 0) {
       setSelectedCategories(categories.map((c) => c.id));
       createGame(categories.map((c) => c.id), {});
       return;
@@ -164,7 +168,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
     setCreating(true);
     try {
       const { data } = await api.post('/games', {
-        mode,
+        mode: serverMode,
         teams: teams.map((t, i) => ({
           name: t.name.trim(),
           color: t.color,
@@ -234,7 +238,9 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
           </button>
         </div>
       )}
-      <h1 className="text-2xl font-extrabold mb-1">{mode === 'KIDS' ? 'واجهة الأطفال' : 'إعداد لعبة جديدة'}</h1>
+      <h1 className="text-2xl font-extrabold mb-1">
+        {mode === 'KIDS' ? 'واجهة الأطفال' : mode === 'DANGER' ? 'خطر ونقاط' : 'إعداد لعبة جديدة'}
+      </h1>
       <div className="flex items-center gap-2 mb-6 text-sm text-[var(--color-ink-dim)]">
         <StepDot active={step === 'teams'} label="الفرق" />
         <span>—</span>

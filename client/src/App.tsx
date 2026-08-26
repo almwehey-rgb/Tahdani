@@ -55,6 +55,7 @@ export default function App() {
 
           <Route path="new-game" element={<NewGameWizard mode="CLASSIC" />} />
           <Route path="new-game/kids" element={<NewGameWizard mode="KIDS" />} />
+          <Route path="new-game/danger" element={<NewGameWizard mode="DANGER" />} />
           <Route path="new-game/student" element={<SubjectPicker />} />
           <Route path="student/:subjectId" element={<StudentQuiz />} />
 

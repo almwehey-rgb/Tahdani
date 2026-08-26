@@ -22,7 +22,7 @@ const upsertSchema = z.object({
   icon: z.string().default('🎯'),
   color: z.string().default('#6C4CE0'),
   imageUrl: z.string().optional().nullable(),
-  type: z.enum(['PERMANENT', 'SEASONAL', 'KIDS', 'DRAWING', 'STUDENT']).default('PERMANENT'),
+  type: z.enum(['PERMANENT', 'SEASONAL', 'KIDS', 'DRAWING', 'STUDENT', 'DANGER']).default('PERMANENT'),
   seasonTag: z.string().optional().nullable(),
   active: z.boolean().default(true),
 });
