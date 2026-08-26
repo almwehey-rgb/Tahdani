@@ -27,6 +27,35 @@ const upsertSchema = z.object({
   active: z.boolean().default(true),
 });
 
+// Favourites are per person: everyone shares one access code, but the shortcut
+// through six hundred categories should be the one you built, not someone else's.
+router.get('/favorites', requireAuth, async (req: AuthedRequest, res) => {
+  const rows = await prisma.favoriteCategory.findMany({
+    where: { userId: req.userId! },
+    select: { categoryId: true },
+  });
+  res.json({ categoryIds: rows.map((r) => r.categoryId) });
+});
+
+router.put('/:id/favorite', requireAuth, async (req: AuthedRequest, res) => {
+  const category = await prisma.category.findUnique({ where: { id: req.params.id } });
+  if (!category) return res.status(404).json({ error: 'الفئة غير موجودة' });
+  // Starring twice is not an error — the unique index makes it a no-op.
+  await prisma.favoriteCategory.upsert({
+    where: { userId_categoryId: { userId: req.userId!, categoryId: req.params.id } },
+    create: { userId: req.userId!, categoryId: req.params.id },
+    update: {},
+  });
+  res.json({ ok: true });
+});
+
+router.delete('/:id/favorite', requireAuth, async (req: AuthedRequest, res) => {
+  await prisma.favoriteCategory.deleteMany({
+    where: { userId: req.userId!, categoryId: req.params.id },
+  });
+  res.json({ ok: true });
+});
+
 router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const parsed = upsertSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة' });
