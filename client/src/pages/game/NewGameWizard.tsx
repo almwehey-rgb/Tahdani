@@ -612,17 +612,27 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                 {listPicker.questions.map((q) => {
                   const checked = listPicker.checked.includes(q.id);
                   return (
-                    <label
+                    <button
                       key={q.id}
-                      className="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-sm"
+                      type="button"
+                      onClick={() => toggleListPickerQuestion(q.id)}
+                      className="w-full flex items-center gap-2 p-2.5 rounded-lg border text-sm text-right"
                       style={{
                         borderColor: checked ? listPicker.category.color : 'var(--color-border)',
                         background: checked ? `${listPicker.category.color}1a` : 'transparent',
                       }}
                     >
-                      <input type="checkbox" checked={checked} onChange={() => toggleListPickerQuestion(q.id)} />
+                      <span
+                        className="w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center text-xs text-white"
+                        style={{
+                          borderColor: checked ? listPicker.category.color : 'var(--color-ink-faint)',
+                          background: checked ? listPicker.category.color : 'transparent',
+                        }}
+                      >
+                        {checked && '✔'}
+                      </span>
                       <span className="flex-1">{q.text}</span>
-                    </label>
+                    </button>
                   );
                 })}
                 {listPicker.questions.length === 0 && (
