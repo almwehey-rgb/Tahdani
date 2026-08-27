@@ -49,6 +49,11 @@ const createGameSchema = z.object({
   mode: z.enum(['CLASSIC', 'KIDS', 'STUDENT']).default('CLASSIC'),
   teams: z.array(teamSchema).min(2).max(4),
   categoryIds: z.array(z.string()).min(1).max(8),
+  // Questions the host hand-picked (typically from a LIST category's round
+  // list) instead of leaving pickBoardQuestions to sample randomly. Any
+  // question here that belongs to one of categoryIds is used as-is; a
+  // category with no matches here still falls back to the random pick.
+  questionIds: z.array(z.string()).optional().default([]),
 });
 
 router.get('/active', requireAuth, async (req: AuthedRequest, res) => {
@@ -62,7 +67,7 @@ router.get('/active', requireAuth, async (req: AuthedRequest, res) => {
 router.post('/', requireAuth, async (req: AuthedRequest, res) => {
   const parsed = createGameSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'بيانات غير صالحة', details: parsed.error.flatten() });
-  const { mode, teams, categoryIds } = parsed.data;
+  const { mode, teams, categoryIds, questionIds } = parsed.data;
 
   const names = teams.map((t) => t.name.trim().toLowerCase());
   if (new Set(names).size !== names.length) {
@@ -109,7 +114,9 @@ router.post('/', requireAuth, async (req: AuthedRequest, res) => {
 
     for (const category of categories) {
       await tx.gameCategory.create({ data: { gameId: createdGame.id, categoryId: category.id } });
-      for (const question of pickBoardQuestions(category.questions)) {
+      const chosen = category.questions.filter((q) => questionIds.includes(q.id));
+      const boardQuestions = chosen.length > 0 ? chosen : pickBoardQuestions(category.questions);
+      for (const question of boardQuestions) {
         await tx.gameQuestion.create({ data: { gameId: createdGame.id, questionId: question.id } });
       }
     }

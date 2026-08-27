@@ -64,6 +64,16 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   const [lifelines, setLifelines] = useState<Record<number, LifelineType[]>>({});
   const [creating, setCreating] = useState(false);
 
+  // For a LIST category, the host picks exactly which of its rounds play
+  // instead of leaving it to the random 6 pickBoardQuestions would draw.
+  const [listPicker, setListPicker] = useState<{
+    category: Category;
+    questions: { id: string; text: string }[];
+    loading: boolean;
+    checked: string[];
+  } | null>(null);
+  const [manualQuestionIds, setManualQuestionIds] = useState<Record<string, string[]>>({});
+
   const categoryType = mode === 'KIDS' ? 'KIDS' : undefined;
   const requiredCategoryCount = mode === 'KIDS' ? 1 : 6;
 
@@ -149,6 +159,14 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
   }
 
   function toggleCategory(id: string) {
+    const cat = categories.find((c) => c.id === id);
+    // LIST categories go through the round picker instead of a plain
+    // add/remove toggle — even a re-click on an already-selected one reopens
+    // the picker so the host can change which rounds are in.
+    if (cat?.type === 'LIST') {
+      openListPicker(cat);
+      return;
+    }
     setSelectedCategories((prev) => {
       if (prev.includes(id)) return prev.filter((c) => c !== id);
       if (prev.length >= requiredCategoryCount) {
@@ -157,6 +175,51 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
       }
       return [...prev, id];
     });
+  }
+
+  async function openListPicker(cat: Category) {
+    setListPicker({ category: cat, questions: [], loading: true, checked: [] });
+    try {
+      const { data } = await api.get(`/categories/${cat.id}/list`);
+      const questions: { id: string; text: string }[] = data.questions.map((q: { id: string; text: string }) => ({ id: q.id, text: q.text }));
+      const existing = manualQuestionIds[cat.id];
+      const checked = existing && existing.length > 0 ? existing.filter((id) => questions.some((q) => q.id === id)) : questions.slice(0, 6).map((q) => q.id);
+      setListPicker({ category: cat, questions, loading: false, checked });
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+      setListPicker(null);
+    }
+  }
+
+  function toggleListPickerQuestion(qid: string) {
+    setListPicker((prev) => (prev ? { ...prev, checked: prev.checked.includes(qid) ? prev.checked.filter((c) => c !== qid) : [...prev.checked, qid] } : prev));
+  }
+
+  function confirmListPicker() {
+    if (!listPicker) return;
+    const id = listPicker.category.id;
+    const alreadyIn = selectedCategories.includes(id);
+    if (listPicker.checked.length === 0) {
+      removeListCategory(id);
+      return;
+    }
+    if (!alreadyIn && selectedCategories.length >= requiredCategoryCount) {
+      toast.error(`اختر ${requiredCategoryCount} فئات فقط`);
+      return;
+    }
+    setSelectedCategories((prev) => (alreadyIn ? prev : [...prev, id]));
+    setManualQuestionIds((prev) => ({ ...prev, [id]: listPicker.checked }));
+    setListPicker(null);
+  }
+
+  function removeListCategory(id: string) {
+    setSelectedCategories((prev) => prev.filter((c) => c !== id));
+    setManualQuestionIds((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setListPicker(null);
   }
 
   function goLifelines() {
@@ -191,6 +254,7 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
           lifelines: lifelinesMap[i] || [],
         })),
         categoryIds,
+        questionIds: Object.values(manualQuestionIds).flat(),
       });
       navigate(`/game/${data.game.id}/board`);
     } catch (err) {
@@ -439,10 +503,10 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
                       </span>
                       {selected && (
                         <span
-                          className="absolute bottom-14 left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center text-sm text-white"
+                          className="absolute bottom-14 left-2 z-10 min-w-6 h-6 px-1.5 rounded-full flex items-center justify-center text-sm text-white"
                           style={{ background: c.color }}
                         >
-                          ✔
+                          {c.type === 'LIST' ? `${manualQuestionIds[c.id]?.length ?? 0} ✔` : '✔'}
                         </span>
                       )}
                       <div className="flex-1 relative flex items-center justify-center text-4xl">
@@ -527,6 +591,56 @@ export default function NewGameWizard({ mode }: { mode: 'CLASSIC' | 'KIDS' }) {
           >
             {creating ? 'جاري الإنشاء...' : '🎮 ابدأ اللعب'}
           </button>
+        </div>
+      )}
+
+      {listPicker && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setListPicker(null)}>
+          <div className="card w-full max-w-lg max-h-[85vh] p-5 animate-pop flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3 shrink-0">
+              <h3 className="font-bold">
+                {listPicker.category.icon} {listPicker.category.name} — اختر الجولات ({listPicker.checked.length})
+              </h3>
+              <button className="text-sm text-[var(--color-ink-faint)]" onClick={() => setListPicker(null)}>
+                ✕
+              </button>
+            </div>
+            {listPicker.loading ? (
+              <Spinner />
+            ) : (
+              <div className="flex-1 overflow-y-auto flex flex-col gap-2 mb-4">
+                {listPicker.questions.map((q) => {
+                  const checked = listPicker.checked.includes(q.id);
+                  return (
+                    <label
+                      key={q.id}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-sm"
+                      style={{
+                        borderColor: checked ? listPicker.category.color : 'var(--color-border)',
+                        background: checked ? `${listPicker.category.color}1a` : 'transparent',
+                      }}
+                    >
+                      <input type="checkbox" checked={checked} onChange={() => toggleListPickerQuestion(q.id)} />
+                      <span className="flex-1">{q.text}</span>
+                    </label>
+                  );
+                })}
+                {listPicker.questions.length === 0 && (
+                  <p className="text-sm text-[var(--color-ink-faint)] text-center py-6">هذي الفئة ما فيها جولات بعد</p>
+                )}
+              </div>
+            )}
+            <div className="flex gap-2 shrink-0">
+              {selectedCategories.includes(listPicker.category.id) && (
+                <button className="btn btn-ghost !text-[var(--color-danger)]" onClick={() => removeListCategory(listPicker.category.id)}>
+                  إزالة الفئة
+                </button>
+              )}
+              <button className="btn btn-primary flex-1" onClick={confirmListPicker} disabled={listPicker.loading}>
+                تأكيد ({listPicker.checked.length} جولة)
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
